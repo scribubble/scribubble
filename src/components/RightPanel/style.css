@@ -1,0 +1,17 @@
+
+.rightPanel {
+    width: 20rem;
+    height: calc(100vh - 0.5rem);
+    border-radius: 1rem;
+    margin: 0.25rem 0.25rem 0.25rem 0rem;
+    background-color: white;
+}
+.rightPanel::after {
+    content: '';
+    position: absolute;
+    /* left: 0; */
+    width: .25rem;
+    height: 100%;
+    background-color: #626e77;
+    cursor: ew-resize;
+}

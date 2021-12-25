@@ -28,10 +28,13 @@
     "sirv-cli": "1.0.3"
   },
   "dependencies": {
+    "@seregpie/three.text-sprite": "^3.2.0",
     "aframe": "^1.2.0",
     "preact": "^10.3.2",
+    "preact-async-route": "^2.2.1",
     "preact-render-to-string": "^5.1.4",
-    "preact-router": "^3.2.1"
+    "preact-router": "^3.2.1",
+    "socket.io-client": "^4.4.0"
   },
   "jest": {
     "preset": "jest-preset-preact",
