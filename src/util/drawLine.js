@@ -92,15 +92,6 @@ export const addPosition = (user_id, point) => {
 }
 
 /*
-    마지막으로 그린 선 이동시키기
-*/
-export const moveLine = (user_id, moveX, moveY, moveZ) => {
-    getLastLine(user_id).position.x += moveX;
-    getLastLine(user_id).position.y += moveY;
-    getLastLine(user_id).position.z += moveZ;
-}
-
-/*
     마지막으로 그린 선 Pop
 */
 export const popLastLine = (user_id) => {
@@ -119,7 +110,6 @@ export const removeLastLine = (user_id, scene) => {
     마지막으로 그린 선 가져오기
 */
 export const getLastLine = (user_id) => {
-    console.log(drawData[user_id].myLines[drawData[user_id].myLines.length - 1]);
     return drawData[user_id].myLines[drawData[user_id].myLines.length - 1];
 }
 

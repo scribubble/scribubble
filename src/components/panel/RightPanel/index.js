@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'preact/hooks';
 
-// import './style.css';
 import style from './style.css'
 
 const RightPanel = () => {
