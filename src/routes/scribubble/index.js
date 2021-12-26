@@ -1,10 +1,20 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useState, useCallback } from 'preact/hooks';
 
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
 import TextSprite from '@seregpie/three.text-sprite';
 
+import { createLineGeometry, addPosition, createLineInScene, removeLastLine, getLastLine, getCenterPos } from '../../util/drawLine';
+import { refreshMousePosition } from '../../util/mouse';
+
+import RightPanel from '../../components/panel/RightPanel';
+import { NavButton } from '../../components/Button';
 
 import io from 'socket.io-client';
+
+import style from './style.css'
+
 const server_host = ":4000";
 // https 로 테스트할때
 // const server_host = "https://localhost:4000";
@@ -20,17 +30,6 @@ const socket = io(server_host, {});
 // });
 
 // javascript:(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='//mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
-
-import { createLineGeometry, addPosition, createLineInScene, moveLine, removeLastLine, getLastLine, getCenterPos } from '../../util/drawLine';
-import { refreshMousePosition } from '../../util/mouse';
-
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
-
-import RightPanel from '../../components/RightPanel';
-
-// import './scribubble.css'
-import style from './style.css'
 
 class Params {
 	constructor() {
@@ -53,7 +52,9 @@ const Scribubble = () => {
 	let scene, camera, renderer, controls, transformControls, raycaster;
 
 	// 그리고 있는지 여부
-	let isDrawing = false;
+	// let isDrawing = false;
+	const [isDrawing, setDrawing] = useState(false);
+
 
 	// 마우스 위치
 	let mousePos = new THREE.Vector3();
@@ -112,6 +113,7 @@ const Scribubble = () => {
 	function render() {
 		requestAnimationFrame(render);
 
+		// console.log(controls);
 		controls.update();
 
 		renderer.render(scene, camera);
@@ -129,12 +131,12 @@ const Scribubble = () => {
 		});
 
 		document.addEventListener("mousemove", event => {
+			console.log(isDrawing);
 
 			refreshMousePosition(event, camera, scene.position, raycaster, mousePos);
 			
 			if (isDrawing) {
 				// addPosition(user_id, mousePos);
-
 				socket.emit('drawing', {
 					user_id: user_id,
 					mousePos: {
@@ -152,8 +154,11 @@ const Scribubble = () => {
 			keysPressed[key] = true;
 
 			if ((key === ' ' || key === 32) && !isDrawing) {
-				isDrawing = true;
+				// isDrawing = true;
+				setDrawing(true);
 				transformControls.detach();
+				
+				// controls.enabled = false;
 				
 				// createLineInScene(user_id, {
 				// 	width: params.linewidth,
@@ -181,29 +186,13 @@ const Scribubble = () => {
 				});
 			}
 
-			if (keysPressed['ArrowDown'] || keysPressed['Down'] && !event.repeat) {
-				socket.emit('move line', { user_id: user_id, moveX: 0, moveY: -0.1, moveZ: 0 });
-			}
-			else if (keysPressed['ArrowUp'] || keysPressed['Up'] && !event.repeat) {
-				// socket.emit('move line', { user_id: user_id, moveX: 0, moveY: 0.1, moveZ: 0 });
-				camera.position.y += 5;
-			}
-			else if (keysPressed['ArrowLeft'] || keysPressed['Left'] && !event.repeat) {
-				socket.emit('move line', { user_id: user_id, moveX: -0.1, moveY: 0, moveZ: 0 });
-			}
-			else if (keysPressed['ArrowRight'] || keysPressed['Right'] && !event.repeat) {
-				// socket.emit('move line', { user_id: user_id, moveX: 0.1, moveY: 0, moveZ: 0 });
-				camera.position.x += 5;
-			}
-
 			if (keysPressed['q']) {
 				transformControls.setMode('translate');
 			} else if (keysPressed['w']) {
 				transformControls.setMode('rotate');
 			} else if (keysPressed['e']) {
 				transformControls.setMode('scale');
-			}
-			
+			}			
 
 		});
 
@@ -213,18 +202,26 @@ const Scribubble = () => {
 			delete keysPressed[key];
 		
 			if ((key === ' ' || key === 32)) {
-				isDrawing = false;
+				// isDrawing = false;
+				setDrawing(false);
 				
-				let curPos = getCenterPos(user_id, getLastLine(user_id));
-				// getLastLine(user_id).position.x = curPos.x;
-				// getLastLine(user_id).position.y = curPos.y;
-				// getLastLine(user_id).position.z = curPos.z;
+				let curLine = getLastLine(user_id);
+				let curPos = getCenterPos(user_id, curLine);				
 				
-				transformControls.attach(getLastLine(user_id));
+				let obj = new THREE.Object3D();
+				obj.position.x = curPos.x;
+				obj.position.y = curPos.y;
+				obj.position.z = curPos.z;
 
-				transformControls.position.x = curPos.x;
-				transformControls.position.y = curPos.y;
-				transformControls.position.z = curPos.z;
+				curLine.parent = obj;
+				
+				curLine.position.x = -curPos.x;
+				curLine.position.y = -curPos.y;
+				curLine.position.z = -curPos.z;
+				
+				scene.add(obj);
+
+				transformControls.attach(obj);
 			}
 		});
 	}
@@ -245,6 +242,10 @@ const Scribubble = () => {
             socket.off('move line');
             socket.off('remove current');
             socket.close();
+			// document.removeEventListener('resize', );
+			// document.removeEventListener('mousemove', );
+			// document.removeEventListener('keydown', );
+			// document.removeEventListener('keyup', );
         };
 	}, []);
 
@@ -280,16 +281,25 @@ const Scribubble = () => {
         });
 
 		socket.on('move line', (data) => {
-			moveLine(data.user_id, data.moveX, data.moveY, data.moveZ);
+			
 		});
 		
 		socket.on('remove current', (data) => {
 			removeLastLine(data.user_id, scene);
 		});
 	}
+	
+	const changeDrawingState = useCallback(
+		() => {
+			setDrawing(bf => {
+				controls.enabled = bf;
+				return !bf
+			});
+		},
+		[controls]
+	);
 
 	const [openPanel, setOpenPanel] = useState(false);
-
 	return (
 		<div id="Scribubble">
 			<div class={style.rightSide}>
@@ -297,6 +307,11 @@ const Scribubble = () => {
 				{
 					openPanel && <RightPanel></RightPanel>
 				}
+			</div>
+			<div class={style.leftSide}>
+				<NavButton isActive={isDrawing} onClick={changeDrawingState}>
+					그리기
+				</NavButton>
 			</div>
 		</div>
 	);

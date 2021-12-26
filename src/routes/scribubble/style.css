@@ -1,3 +1,12 @@
+.leftSide {
+    display: flex;
+    position: fixed;
+    left: 0px;
+    top: 0px;    
+    height: 100%;
+    align-items: center;
+}
+
 .rightSide {
     display: flex;
     position: fixed;
