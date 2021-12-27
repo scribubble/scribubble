@@ -1,3 +1,4 @@
+import { h, render, Component } from 'preact';
 import { useEffect, useState, useCallback } from 'preact/hooks';
 
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
@@ -9,9 +10,9 @@ import { createLineGeometry, addPosition, createLineInScene, removeLastLine, get
 import { refreshMousePosition } from '../../util/mouse';
 
 import RightPanel from '../../components/panel/RightPanel';
-import { NavButton } from '../../components/Button';
+import { ToolButton, ToolColorButton } from '../../components/Button';
 
-import io from 'socket.io-client';
+import io, { connect } from 'socket.io-client';
 
 import style from './style.css'
 
@@ -33,165 +34,216 @@ const socket = io(server_host, {});
 
 class Params {
 	constructor() {
-		this.color = "#FFFFFF";
+		this.color = "#000000";
 		this.linewidth = 5;
 	}
 }
 
 const params = new Params();
-const gui = new GUI(  );
+const gui = new GUI();
 gui.domElement.id = 'gui';
+
+const MODE = {
+    SELECTING: 'SELECTING',
+    DRAWING: 'DRAWING',
+};
 
 window.addEventListener('load', function () {
 	gui.addColor(params, 'color').onChange();
 	gui.add(params, 'linewidth', 1, 10).onChange();
 });
 
-const Scribubble = () => {
-	// Three 기본 요소
-	let scene, camera, renderer, controls, transformControls, raycaster;
+class Scribubble extends Component {
+	state = {
+		mode: MODE.SELECTING,
+		openPanel: false,
+		drawingColor: '#000000'
+	};
 
-	// 그리고 있는지 여부
-	// let isDrawing = false;
-	const [isDrawing, setDrawing] = useState(false);
+	constructor() {
+		super();
 
+	}
 
-	// 마우스 위치
-	let mousePos = new THREE.Vector3();
+	componentDidMount() {
+		this.init();
+
+		this.listener();
+		
+		this.render();
+
+		this.initSocketListener();
+	}
+
+	componentWillUnmount() {
+		socket.off('user_id');
+		socket.off('draw start');
+		socket.off('drawing');
+		socket.off('move line');
+		socket.off('remove current');
+		socket.close();
+	}
+
+	init() {
+		this.scene = new THREE.Scene(); 
+		this.scene.background = new THREE.Color( 0xEEFFEE );
 	
-	// 누르거나 누르고있는 키 들
-	let keysPressed = {};		// 키 다중 입력 처리용
-
-	// 유저 고유 id
-	let user_id = 'aaa';
-
-	// 접속해 있는 유저들의 id와 Tag저장됨
-	let nameTag = {};
-
-	function init() {
-		scene = new THREE.Scene(); 
-		// scene.background = new THREE.Color( 0xEEFFEE );
-	
-		camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 10000);
+		this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 10000);
 		// camera = new THREE.OrthographicCamera(  window.innerWidth / - 2,  window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 1, 10000 );
-		camera.position.set(0, 0, 100);
+		this.camera.position.set(0, 0, 100);
 
-		renderer = new THREE.WebGLRenderer({ antialias:true });
-		renderer.setSize(window.innerWidth, window.innerHeight);
-		document.body.appendChild(renderer.domElement);
-	
-		controls = new OrbitControls(camera, renderer.domElement);
+		this.renderer = new THREE.WebGLRenderer({ antialias:true });
+		this.renderer.setSize(window.innerWidth, window.innerHeight);
+		// document.body.appendChild(this.renderer.domElement);
+		this.element.appendChild(this.renderer.domElement);
+
+		this.controls = new OrbitControls(this.camera, this.renderer.domElement);
 
 		const geometry = new THREE.BoxGeometry(10, 10, 10)
 		const material = new THREE.MeshNormalMaterial({ transparent: true })
 		
 		const cube = new THREE.Mesh(geometry, material)
-		// cube.position.y = 10;
-		// cube.position.z = 2;
-		
-		scene.add(cube)
+		this.scene.add(cube);
 
 		const cube2 = new THREE.Mesh(geometry, material)
-		// cube.position.y = 10;
 		cube2.position.x = 100;
 		
-		scene.add(cube2)
+		this.scene.add(cube2)
 
-		transformControls = new TransformControls(camera, renderer.domElement);
-		// transformControls.attach(cube)
-		// transformControls.setMode('rotate')
-		scene.add(transformControls);
+		this.transformControls = new TransformControls(this.camera, this.renderer.domElement);
+		this.scene.add(this.transformControls);
 		
-		transformControls.addEventListener('dragging-changed', (e) => {
-			controls.enabled = !e.value;
+		this.transformControls.addEventListener('dragging-changed', (e) => {
+			if (this.state.mode === MODE.SELECTING)
+			this.controls.enabled = !e.value;
 		});
 		
-		raycaster = new THREE.Raycaster();
+		this.renderer.render( this.scene, this.camera );
 
+		this.raycaster = new THREE.Raycaster();
+
+		// 그리고 있는지 여부
+		this.isDrawing = false;
+
+		// 마우스 위치
+		this.mousePos = new THREE.Vector3();
+
+		// 누르거나 누르고있는 키 들
+		this.keysPressed = {};		// 키 다중 입력 처리용
+
+		// 유저 고유 id
+		this.user_id = 'aaa';
+
+		// 접속해 있는 유저들의 id와 Tag저장됨
+		this.nameTag = {};
+		
+		const animate = () => {
+			this.renderer.render(this.scene, this.camera);
+			this.controls.update();
+			requestAnimationFrame(animate);
+		}
+		animate();
 	}
 
-	function render() {
-		requestAnimationFrame(render);
+	drawStart = () => {
+		this.isDrawing = true;
+		
+		this.transformControls.detach();
+		
+		// createLineInScene(user_id, {
+		// 	width: params.linewidth,
+		// 	color: params.color,
+		// 	geo: createLineGeometry(user_id, mousePos)
+		// }, scene);
 
-		// console.log(controls);
-		controls.update();
-
-		renderer.render(scene, camera);
+		socket.emit('draw start', {
+			user_id: this.user_id,
+			linewidth: params.linewidth,
+			color: this.state.drawingColor,
+			mousePos: {
+				x: this.mousePos.x,
+				y: this.mousePos.y,
+				z: this.mousePos.z,
+			}
+		});
 	}
 
-	function listener() {
+	drawEnd = () => {
+		this.isDrawing = false;
+		
+		let curLine = getLastLine(this.user_id);
+		let curPos = getCenterPos(this.user_id, curLine);
+		
+		let obj = new THREE.Object3D();
+		obj.position.x = curPos.x;
+		obj.position.y = curPos.y;
+		obj.position.z = curPos.z;
+
+		curLine.parent = obj;
+		
+		curLine.position.x = -curPos.x;
+		curLine.position.y = -curPos.y;
+		curLine.position.z = -curPos.z;
+		
+		this.scene.add(obj);
+
+		this.transformControls.attach(obj);
+	}
+
+	listener() {
 		window.addEventListener('resize', () => {
 			const width = document.body.clientWidth;
 			const height = document.body.clientHeight;
 	
-			camera.aspect = width / height;
-			camera.updateProjectionMatrix();
+			this.camera.aspect = width / height;
+			this.camera.updateProjectionMatrix();
 	
-			renderer.setSize(width, height);
+			this.renderer.setSize(width, height);
 		});
 
-		document.addEventListener("mousemove", event => {
-			console.log(isDrawing);
 
-			refreshMousePosition(event, camera, scene.position, raycaster, mousePos);
+		this.renderer.domElement.addEventListener("mousemove", event => {
+			refreshMousePosition(event, this.camera, this.scene.position, this.raycaster, this.mousePos);
 			
-			if (isDrawing) {
+			if (this.isDrawing) {
+				console.log('drawing');
 				// addPosition(user_id, mousePos);
 				socket.emit('drawing', {
-					user_id: user_id,
+					user_id: this.user_id,
 					mousePos: {
-						x: mousePos.x,
-						y: mousePos.y,
-						z: mousePos.z,
+						x: this.mousePos.x,
+						y: this.mousePos.y,
+						z: this.mousePos.z,
 					}
 				});
 			}
 		});
 		
+		
 		document.addEventListener("keydown", event => {
+			// console.log(this.user_id);
 			let key = event.key || event.keyCode;
 
-			keysPressed[key] = true;
+			this.keysPressed[key] = true;
 
-			if ((key === ' ' || key === 32) && !isDrawing) {
-				// isDrawing = true;
-				setDrawing(true);
-				transformControls.detach();
-				
-				// controls.enabled = false;
-				
-				// createLineInScene(user_id, {
-				// 	width: params.linewidth,
-				// 	color: params.color,
-				// 	geo: createLineGeometry(user_id, mousePos)
-				// }, scene);
-
-				socket.emit('draw start', {
-					user_id: user_id,
-					linewidth: params.linewidth,
-					color: params.color,
-					mousePos: {
-						x: mousePos.x,
-						y: mousePos.y,
-						z: mousePos.z,
-					}
-				});
+			if ((key === ' ' || key === 32) && !this.isDrawing) {
+				this.drawStart();
 			}
 			
-			if (keysPressed['Control'] && event.key == 'z' && !event.repeat) {
+			if (this.keysPressed['Control'] && event.key == 'z' && !event.repeat) {
 				// removeLastLine(user_id, scene);
 
 				socket.emit('remove current', {
-					user_id: user_id
+					user_id: this.user_id
 				});
 			}
 
-			if (keysPressed['q']) {
-				transformControls.setMode('translate');
-			} else if (keysPressed['w']) {
-				transformControls.setMode('rotate');
-			} else if (keysPressed['e']) {
-				transformControls.setMode('scale');
+			if (this.keysPressed['q']) {
+				this.transformControls.setMode('translate');
+			} else if (this.keysPressed['w']) {
+				this.transformControls.setMode('rotate');
+			} else if (this.keysPressed['e']) {
+				this.transformControls.setMode('scale');
 			}			
 
 		});
@@ -199,59 +251,17 @@ const Scribubble = () => {
 		document.addEventListener("keyup", event => {
 			let key = event.key || event.keyCode;
 			
-			delete keysPressed[key];
+			delete this.keysPressed[key];
 		
-			if ((key === ' ' || key === 32)) {
-				// isDrawing = false;
-				setDrawing(false);
-				
-				let curLine = getLastLine(user_id);
-				let curPos = getCenterPos(user_id, curLine);				
-				
-				let obj = new THREE.Object3D();
-				obj.position.x = curPos.x;
-				obj.position.y = curPos.y;
-				obj.position.z = curPos.z;
-
-				curLine.parent = obj;
-				
-				curLine.position.x = -curPos.x;
-				curLine.position.y = -curPos.y;
-				curLine.position.z = -curPos.z;
-				
-				scene.add(obj);
-
-				transformControls.attach(obj);
+			if ((key === ' ' || key === 32) && this.isDrawing) {
+				this.drawEnd();
 			}
 		});
 	}
 
-	useEffect(() => {
-		init();
-
-		listener();
-		
-		render();
-
-		initSocketListener();
-
-        return () => {
-            socket.off('user_id');
-            socket.off('draw start');
-            socket.off('drawing');
-            socket.off('move line');
-            socket.off('remove current');
-            socket.close();
-			// document.removeEventListener('resize', );
-			// document.removeEventListener('mousemove', );
-			// document.removeEventListener('keydown', );
-			// document.removeEventListener('keyup', );
-        };
-	}, []);
-
-	function initSocketListener() {
+	initSocketListener() {
         socket.on('user_id', (data) => {
-			user_id = data.user_id;
+			this.user_id = data.user_id;
         });
 
 		socket.on('draw start', (data) => {
@@ -259,20 +269,20 @@ const Scribubble = () => {
 				width: data.linewidth,
 				color: data.color,
 				geo: createLineGeometry(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z))
-			}, scene);
+			}, this.scene);
 				
-			if (!nameTag[data.user_id]) {
-				nameTag[data.user_id] = new TextSprite({
+			if (!this.nameTag[data.user_id]) {
+				this.nameTag[data.user_id] = new TextSprite({
 					text: data.user_id,
 					fontFamily: 'Arial, Helvetica, sans-serif',
 					fontSize: 1,
 					color: '#ffbbff',
 				});	
-				scene.add(nameTag[data.user_id]);
+				this.scene.add(this.nameTag[data.user_id]);
 			}
-			nameTag[data.user_id].position.x = data.mousePos.x;
-			nameTag[data.user_id].position.y = data.mousePos.y;
-			nameTag[data.user_id].position.z = data.mousePos.z;
+			this.nameTag[data.user_id].position.x = data.mousePos.x;
+			this.nameTag[data.user_id].position.y = data.mousePos.y;
+			this.nameTag[data.user_id].position.z = data.mousePos.z;
 
 		});
 
@@ -285,36 +295,67 @@ const Scribubble = () => {
 		});
 		
 		socket.on('remove current', (data) => {
-			removeLastLine(data.user_id, scene);
+			removeLastLine(data.user_id, this.scene);
 		});
 	}
-	
-	const changeDrawingState = useCallback(
-		() => {
-			setDrawing(bf => {
-				controls.enabled = bf;
-				return !bf
-			});
-		},
-		[controls]
-	);
 
-	const [openPanel, setOpenPanel] = useState(false);
-	return (
-		<div id="Scribubble">
+	// const [color, setColor] = useState('#FF0000');
+
+	mouseDown = (e) => {
+		if (e.which !== 1) return;
+
+		if (!this.transformControls.dragging)
+			this.drawStart();
+	}
+	mouseUp = (e) => {
+		if (e.which !== 1) return;
+
+		if (this.isDrawing)
+			this.drawEnd();
+	}
+
+	modeChange = (event, chnageToMode) => {
+		if (chnageToMode === MODE.DRAWING && this.state.mode !== MODE.DRAWING) {
+			this.setState({ mode: MODE.DRAWING });
+
+			this.controls.enabled = false;
+
+			this.renderer.domElement.addEventListener('mousedown', this.mouseDown);
+			this.renderer.domElement.addEventListener('mouseup',  this.mouseUp);
+
+		} else if (chnageToMode === MODE.DRAWING && this.state.mode === MODE.DRAWING) {
+			this.setState({ mode: MODE.SELECTING });
+			
+			this.controls.enabled = true;
+
+			this.renderer.domElement.removeEventListener('mousedown', this.mouseDown);
+			this.renderer.domElement.removeEventListener('mouseup',  this.mouseUp);
+		}
+
+	}
+
+	render() {
+		return (	
+		<div id="Scribubble" ref={el => this.element = el} >
 			<div class={style.rightSide}>
-				<button class={style.openBT} onClick={() => { setOpenPanel(!openPanel)}}>2D</button>
+				<button class={style.openBT} onClick={() => { this.setState((prev) => ({ openPanel: !prev.openPanel })) }}>2D</button>
 				{
-					openPanel && <RightPanel></RightPanel>
+					this.state.openPanel && <RightPanel></RightPanel>
 				}
 			</div>
 			<div class={style.leftSide}>
-				<NavButton isActive={isDrawing} onClick={changeDrawingState}>
-					그리기
-				</NavButton>
+				<div class={style.toolbar}>
+					<ToolButton isActive={this.state.mode === MODE.DRAWING} onClick={e => {this.modeChange(e, MODE.DRAWING) }}>
+						D
+					</ToolButton>
+					<ToolColorButton value={this.state.drawingColor} onChange={e => { this.setState({ drawingColor: e.target.value })}}></ToolColorButton>
+					{/* <input type="color" id="" onchange={e => setColor(e.target.value)} value="#ff0000" style="width:85%;"></input> */}
+					
+				</div>
 			</div>
 		</div>
-	);
+		);
+	} 
 };
 
 export default Scribubble;
