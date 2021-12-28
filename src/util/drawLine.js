@@ -1,9 +1,6 @@
 import { Line2 } from 'three/examples/jsm/lines/Line2.js';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
-import TextSprite from '@seregpie/three.text-sprite';
-import { Vector2 } from 'aframe';
-import { Vector3 } from 'aframe';
 
 let drawData = {};  /*  유저마다의 그림 데이터들이 들어감
 drawData = {
@@ -73,8 +70,6 @@ export const createLine = (opt) => {
 */
 export const createLineInScene = (user_id, opt, scene) => {
     drawData[user_id].myLines.push( createLine(opt) );
-
-    console.log(drawData, user_id)
     
     scene.add(getLastLine(user_id));
 }

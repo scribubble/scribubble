@@ -1,9 +1,16 @@
 .leftSide {
-    display: flex;
     position: fixed;
     left: 0px;
-    top: 0px;    
-    height: 100%;
+    top: 50%;
+    transform: translate(0px, -50%);
+}
+.leftSide .toolbar {
+    display: flex;
+    margin-left: 0.25rem;
+    padding: 0.25rem;
+    border-radius: 0.5rem;
+    background: #ff9c9c;
+    flex-direction: column;
     align-items: center;
 }
 
