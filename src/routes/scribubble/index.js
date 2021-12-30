@@ -10,7 +10,7 @@ import { createLineGeometry, addPosition, createLineInScene, removeLastLine, get
 import { refreshMousePosition } from '../../util/mouse';
 
 import RightPanel from '../../components/panel/RightPanel';
-import { ToolButton, ToolColorButton } from '../../components/Button';
+// import { ToolButton, ToolColorButton } from '../../components/Button';
 
 import io, { connect } from 'socket.io-client';
 
@@ -356,10 +356,10 @@ class Scribubble extends Component {
 			</div>
 			<div class={style.leftSide}>
 				<div class={style.toolbar}>
-					<ToolButton isActive={this.state.mode === MODE.DRAWING} onClick={e => {this.modeChange(e, MODE.DRAWING) }}>
-						2D
+					{/* <ToolButton isActive={this.state.mode === MODE.DRAWING} onClick={e => {this.modeChange(e, MODE.DRAWING) }}>
+						A
 					</ToolButton>
-					<ToolColorButton value={this.state.drawingColor} onChange={e => { this.setState({ drawingColor: e.target.value })}}></ToolColorButton>
+					<ToolColorButton value={this.state.drawingColor} onChange={e => { this.setState({ drawingColor: e.target.value })}}></ToolColorButton> */}
 					{/* <input type="color" id="" onchange={e => setColor(e.target.value)} value="#ff0000" style="width:85%;"></input> */}
 					
 				</div>
