@@ -135,6 +135,10 @@ class Scribubble extends Component {
 			requestAnimationFrame(animate);
 		}
 		animate();
+
+		// 버블에 저장된 데이터 요청
+		let currentBubble = 'room1';
+		socket.emit('enter bubble', currentBubble);
 	}
 
 	initListener() {
@@ -184,6 +188,28 @@ class Scribubble extends Component {
 		
 		socket.on('remove current', (data) => {
 			removeLastLine(data.user_id, this.scene);
+		});
+
+		socket.on('get saved bubble', (data) => {
+			// console.log(data);
+
+			for(let i = 0; i < data.line.length; i++) {
+				let line = data.line[i];
+				let pos = line.linePositions;
+				let testUserId = data.userid[0]; // 데이터 구조에 오류가 있어서, 라인 작성자를 임시로 설정
+
+				createLineInScene(testUserId, {
+					width: line.lineWidth,
+					color: line.lineColor,
+					geo: createLineGeometry(
+						testUserId, 
+						new THREE.Vector3(pos[0].x, pos[0].y, pos[0].z))
+				}, this.scene);
+				
+				for(let j = 1; j < pos.length; j++) {
+					addPosition(testUserId, new THREE.Vector3(pos[j].x, pos[j].y, pos[j].z));
+				}
+			}
 		});
 	}
 
