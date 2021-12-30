@@ -13,7 +13,7 @@ const Home = () => {
         <Link activeClassName="active" href="/vr">
           VR
         </Link>
-        <Background>안녕하세요! hhhh ㅠㅠㅠㅠ 와아아아</Background>
+        <Background>안su</Background>
       </nav>
     </div>
   );
@@ -22,5 +22,5 @@ const Home = () => {
 export default Home;
 
 const Background = styled.div`
-  background-color: blue;
+  background-color: red;
 `;
