@@ -114,8 +114,6 @@ export const getLastLine = (user_id) => {
 export const getCenterPos = (user_id, line) => {
     let arr = line.geometry.getAttribute('instanceStart').array;
 
-    // console.log(line);
-
     return new THREE.Vector3(
         (arr[0] + arr[arr.length - 3]) / 2,
         (arr[1] + arr[arr.length - 2]) / 2,

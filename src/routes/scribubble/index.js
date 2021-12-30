@@ -62,26 +62,18 @@ class Scribubble extends Component {
 
 	constructor() {
 		super();
-
 	}
 
 	componentDidMount() {
 		this.init();
 
-		this.listener();
+		this.initListener();
 		
-		this.render();
-
 		this.initSocketListener();
 	}
 
 	componentWillUnmount() {
-		socket.off('user_id');
-		socket.off('draw start');
-		socket.off('drawing');
-		socket.off('move line');
-		socket.off('remove current');
-		socket.close();
+		this.removeSocketListener();
 	}
 
 	init() {
@@ -145,6 +137,83 @@ class Scribubble extends Component {
 		animate();
 	}
 
+	initListener() {
+		window.addEventListener('resize', this.windowResize);
+
+		this.renderer.domElement.addEventListener("mousemove", this.mouseMove);
+				
+		document.addEventListener("keydown", this.keyDown);
+
+		document.addEventListener("keyup", this.keyUp);
+	}
+
+	initSocketListener() {
+        socket.on('user_id', (data) => {
+			this.user_id = data.user_id;
+        });
+
+		socket.on('draw start', (data) => {
+			createLineInScene(data.user_id, {
+				width: data.linewidth,
+				color: data.color,
+				geo: createLineGeometry(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z))
+			}, this.scene);
+				
+			if (!this.nameTag[data.user_id]) {
+				this.nameTag[data.user_id] = new TextSprite({
+					text: data.user_id,
+					fontFamily: 'Arial, Helvetica, sans-serif',
+					fontSize: 1,
+					color: '#ffbbff',
+				});	
+				this.scene.add(this.nameTag[data.user_id]);
+			}
+			this.nameTag[data.user_id].position.x = data.mousePos.x;
+			this.nameTag[data.user_id].position.y = data.mousePos.y;
+			this.nameTag[data.user_id].position.z = data.mousePos.z;
+
+		});
+
+        socket.on('drawing', (data) => {
+			addPosition(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z));
+        });
+
+		socket.on('move line', (data) => {
+			
+		});
+		
+		socket.on('remove current', (data) => {
+			removeLastLine(data.user_id, this.scene);
+		});
+	}
+
+	removeSocketListener = () => {
+		window.removeEventListener('resize', this.windowResize);
+
+		this.renderer.domElement.removeEventListener("mousemove", this.mouseMove);
+				
+		document.removeEventListener("keydown", this.keyDown);
+
+		document.removeEventListener("keyup", this.keyUp);
+
+		socket.off('user_id');
+		socket.off('draw start');
+		socket.off('drawing');
+		socket.off('move line');
+		socket.off('remove current');
+		socket.close();
+	}
+
+	windowResize = () => {
+		const width = document.body.clientWidth;
+		const height = document.body.clientHeight;
+
+		this.camera.aspect = width / height;
+		this.camera.updateProjectionMatrix();
+
+		this.renderer.setSize(width, height);
+	}
+
 	drawStart = () => {
 		this.isDrawing = true;
 		
@@ -190,122 +259,64 @@ class Scribubble extends Component {
 		this.transformControls.attach(obj);
 	}
 
-	listener() {
-		window.addEventListener('resize', () => {
-			const width = document.body.clientWidth;
-			const height = document.body.clientHeight;
-	
-			this.camera.aspect = width / height;
-			this.camera.updateProjectionMatrix();
-	
-			this.renderer.setSize(width, height);
-		});
 
+	keyDown = (event) => {
+		let key = event.key || event.keyCode;
 
-		this.renderer.domElement.addEventListener("mousemove", event => {
-			refreshMousePosition(event, this.camera, this.scene.position, this.raycaster, this.mousePos);
-			
-			if (this.isDrawing) {
-				console.log('drawing');
-				// addPosition(user_id, mousePos);
-				socket.emit('drawing', {
-					user_id: this.user_id,
-					mousePos: {
-						x: this.mousePos.x,
-						y: this.mousePos.y,
-						z: this.mousePos.z,
-					}
-				});
-			}
-		});
+		this.keysPressed[key] = true;
+
+		if ((key === ' ' || key === 32) && !this.isDrawing) {
+			this.drawStart();
+		}
 		
-		
-		document.addEventListener("keydown", event => {
-			// console.log(this.user_id);
-			let key = event.key || event.keyCode;
+		if (this.keysPressed['Control'] && event.key == 'z' && !event.repeat) {
+			// removeLastLine(user_id, scene);
 
-			this.keysPressed[key] = true;
+			socket.emit('remove current', {
+				user_id: this.user_id
+			});
+		}
 
-			if ((key === ' ' || key === 32) && !this.isDrawing) {
-				this.drawStart();
-			}
-			
-			if (this.keysPressed['Control'] && event.key == 'z' && !event.repeat) {
-				// removeLastLine(user_id, scene);
-
-				socket.emit('remove current', {
-					user_id: this.user_id
-				});
-			}
-
-			if (this.keysPressed['q']) {
-				this.transformControls.setMode('translate');
-			} else if (this.keysPressed['w']) {
-				this.transformControls.setMode('rotate');
-			} else if (this.keysPressed['e']) {
-				this.transformControls.setMode('scale');
-			}			
-
-		});
-
-		document.addEventListener("keyup", event => {
-			let key = event.key || event.keyCode;
-			
-			delete this.keysPressed[key];
-		
-			if ((key === ' ' || key === 32) && this.isDrawing) {
-				this.drawEnd();
-			}
-		});
+		if (this.keysPressed['q']) {
+			this.transformControls.setMode('translate');
+		} else if (this.keysPressed['w']) {
+			this.transformControls.setMode('rotate');
+		} else if (this.keysPressed['e']) {
+			this.transformControls.setMode('scale');
+		}			
 	}
 
-	initSocketListener() {
-        socket.on('user_id', (data) => {
-			this.user_id = data.user_id;
-        });
-
-		socket.on('draw start', (data) => {
-			createLineInScene(data.user_id, {
-				width: data.linewidth,
-				color: data.color,
-				geo: createLineGeometry(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z))
-			}, this.scene);
-				
-			if (!this.nameTag[data.user_id]) {
-				this.nameTag[data.user_id] = new TextSprite({
-					text: data.user_id,
-					fontFamily: 'Arial, Helvetica, sans-serif',
-					fontSize: 1,
-					color: '#ffbbff',
-				});	
-				this.scene.add(this.nameTag[data.user_id]);
-			}
-			this.nameTag[data.user_id].position.x = data.mousePos.x;
-			this.nameTag[data.user_id].position.y = data.mousePos.y;
-			this.nameTag[data.user_id].position.z = data.mousePos.z;
-
-		});
-
-        socket.on('drawing', (data) => {
-			addPosition(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z));
-        });
-
-		socket.on('move line', (data) => {
-			
-		});
+	keyUp = (event) => {
+		let key = event.key || event.keyCode;
 		
-		socket.on('remove current', (data) => {
-			removeLastLine(data.user_id, this.scene);
-		});
+		delete this.keysPressed[key];
+	
+		if ((key === ' ' || key === 32) && this.isDrawing) {
+			this.drawEnd();
+		}
 	}
-
-	// const [color, setColor] = useState('#FF0000');
 
 	mouseDown = (e) => {
 		if (e.which !== 1) return;
 
 		if (!this.transformControls.dragging)
 			this.drawStart();
+	}
+	mouseMove = (event) => {
+		refreshMousePosition(event, this.camera, this.scene.position, this.raycaster, this.mousePos);
+		
+		if (this.isDrawing) {
+			console.log('drawing');
+			// addPosition(user_id, mousePos);
+			socket.emit('drawing', {
+				user_id: this.user_id,
+				mousePos: {
+					x: this.mousePos.x,
+					y: this.mousePos.y,
+					z: this.mousePos.z,
+				}
+			});
+		}
 	}
 	mouseUp = (e) => {
 		if (e.which !== 1) return;
@@ -346,7 +357,7 @@ class Scribubble extends Component {
 			<div class={style.leftSide}>
 				<div class={style.toolbar}>
 					<ToolButton isActive={this.state.mode === MODE.DRAWING} onClick={e => {this.modeChange(e, MODE.DRAWING) }}>
-						D
+						2D
 					</ToolButton>
 					<ToolColorButton value={this.state.drawingColor} onChange={e => { this.setState({ drawingColor: e.target.value })}}></ToolColorButton>
 					{/* <input type="color" id="" onchange={e => setColor(e.target.value)} value="#ff0000" style="width:85%;"></input> */}
