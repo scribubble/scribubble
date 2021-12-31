@@ -124,6 +124,10 @@ class Scribubble extends Component {
 			requestAnimationFrame(animate);
 		}
 		animate();
+
+		// 버블에 저장된 데이터 요청
+		let currentBubble = 'room1';
+		socket.emit('enter bubble', currentBubble);
 	}
 
 	initListener() {
@@ -164,6 +168,7 @@ class Scribubble extends Component {
 		});
 
         socket.on('drawing', (data) => {
+			console.log(data);
 			addPosition(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z));
         });
 
@@ -173,6 +178,30 @@ class Scribubble extends Component {
 		
 		socket.on('remove current', (data) => {
 			removeLastLine(data.user_id, this.scene);
+		});
+
+		socket.on('get saved bubble', (data) => {
+			console.log(data);
+
+			console.log(data.line.length);
+
+			for(let i = 0; i < data.line.length; i++) {
+				let line = data.line[i];
+				let pos = line.linePositions;
+				let testUserId = data.userid[0]; // 데이터 구조에 오류가 있어서, 라인 작성자를 임시로 설정
+
+				createLineInScene(testUserId, {
+					width: line.lineWidth,
+					color: line.lineColor,
+					geo: createLineGeometry(
+						testUserId, 
+						new THREE.Vector3(pos[0].x, pos[0].y, pos[0].z))
+				}, this.scene);
+				
+				for(let j = 1; j < pos.length; j++) {
+					addPosition(testUserId, new THREE.Vector3(pos[j].x, pos[j].y, pos[j].z));
+				}
+			}
 		});
 	}
 
@@ -190,6 +219,7 @@ class Scribubble extends Component {
 		socket.off('drawing');
 		socket.off('move line');
 		socket.off('remove current');
+		socket.off('get saved bubble');
 		socket.close();
 	}
 
@@ -272,7 +302,9 @@ class Scribubble extends Component {
 			this.transformControls.setMode('rotate');
 		} else if (this.keysPressed['e']) {
 			this.transformControls.setMode('scale');
-		}			
+		} else if(this.keysPressed['s']) {
+			socket.emit('save bubble', {userid: this.user_id});
+		}
 	}
 
 	keyUp = (event) => {
@@ -304,7 +336,7 @@ class Scribubble extends Component {
 					z: this.mousePos.z,
 				}
 			});
-		}
+		} 
 	}
 	mouseUp = (e) => {
 		if (e.which !== 1) return;
