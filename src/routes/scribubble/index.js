@@ -151,6 +151,9 @@ class Scribubble extends Component {
 
 		// 접속해 있는 유저들의 id와 Tag저장됨
 		this.nameTag = {};
+
+		// 타겟팅 중인 오브젝트
+		this.targetObj = null;
 		
 		const animate = () => {
 			this.renderer.render(this.scene, this.camera);
@@ -307,22 +310,36 @@ class Scribubble extends Component {
 		// this.transformControls.attach(obj);
 	}
 
+	deleteTargetObject = () => {
+		this.transformControls.detach();
+		
+		if (this.targetObj.type === 'Line2')
+			this.objEntity.remove(this.targetObj.parent);
+		this.objEntity.remove(this.targetObj);
+	}
 
 	keyDown = (event) => {
 		let key = event.key || event.keyCode;
 
 		this.keysPressed[key] = true;
 
+		if (event.repeat)
+			return;
+
 		if ((key === ' ' || key === 32) && !this.isDrawing) {
 			this.drawStart();
 		}
 		
-		if (this.keysPressed['Control'] && event.key == 'z' && !event.repeat) {
+		if (this.keysPressed['Control'] && event.key == 'z') {
 			// removeLastLine(user_id, scene);
 
 			socket.emit('remove current', {
 				user_id: this.user_id
 			});
+		}
+		
+		if (this.keysPressed['Delete']) {
+			this.deleteTargetObject();
 		}
 
 		if (this.keysPressed['q']) {
@@ -351,10 +368,10 @@ class Scribubble extends Component {
 
 		if (!this.transformControls.dragging && this.sphereInter.visible) {
 			this.transformControls.attach(
-				this.intersects[0].object.type === 'Line2' ?
-					this.intersects[0].object.parent:
-					this.intersects[0].object
-			);			
+				this.targetObj.type === 'Line2' ?
+					this.targetObj.parent:
+					this.targetObj
+			);
 		}
 
 		if (!this.transformControls.dragging && this.state.mode === MODE.DRAWING)
@@ -364,10 +381,11 @@ class Scribubble extends Component {
 		refreshMousePosition(event, this.camera, this.scene.position, this.raycaster, this.mousePos);
 
 		if (this.state.mode === MODE.SELECTING) {
-			this.intersects = this.raycaster.intersectObjects(this.objEntity.children, true);
-			if (this.intersects.length > 0) {
+			const intersects = this.raycaster.intersectObjects(this.objEntity.children, true);
+			if (intersects.length > 0) {
 				this.sphereInter.visible = true;
-				this.sphereInter.position.copy(this.intersects[0].point);
+				this.sphereInter.position.copy(intersects[0].point);
+				this.targetObj = intersects[0].object;
 			} else {
 				this.sphereInter.visible = false;
 			}
@@ -472,8 +490,7 @@ class Scribubble extends Component {
 					></DrawingToolButton>
 					
 					<EraseToolButton
-						isActive={this.state.mode === MODE.ERASEING}
-						onClick={e => { this.modeChange(e, MODE.ERASEING) }}
+						onClick={e => { this.deleteTargetObject() }}
 					></EraseToolButton>					
 				</div>
 				{

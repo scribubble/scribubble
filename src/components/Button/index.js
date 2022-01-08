@@ -16,7 +16,10 @@ export const RoundButton = styled.button`
 
 export const ToolButton = styled(RoundedButton)`
     svg {
-        stroke:  ${(props) => props.isActive ? '#FF2052': 'currentColor'}
+        stroke: ${(props) => props.isActive ? '#FF2052': 'currentColor'}
+    }
+    &:hover svg {
+        stroke: ${(props) => props.isActive ? '#FF2052': '#5c5c5c'}
     }
 `;
 
