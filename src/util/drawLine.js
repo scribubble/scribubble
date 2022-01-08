@@ -56,6 +56,7 @@ export const createLine = (opt) => {
 		linewidth: opt.width,
 		color: opt.color
 	});
+    // matLine.worldUnits = true;
 
     if (window)
         matLine.resolution.set(window.innerWidth, window.innerHeight);

@@ -13,14 +13,10 @@ export const refreshMousePosition = (event, camera, scenePosition, raycaster, sa
     // plane 이용해서 마우스 위치를 3d 에서 얻어오기
     // planeNormal.copy(camera.el.getAttribute('position')).normalize();
     planeNormal.copy(camera.position).normalize();
-    plane.setFromNormalAndCoplanarPoint(planeNormal, scenePosition);
+    plane.setFromNormalAndCoplanarPoint(camera.getWorldDirection(plane.normal), scenePosition);
+    // plane.setFromNormalAndCoplanarPoint(planeNormal, scenePosition);
 
     // raycaster
     raycaster.setFromCamera(mouse, camera);
     raycaster.ray.intersectPlane(plane, saveHere);
-    // console.log('SH', saveHere);
-    
-    // saveHere = new THREE.Vector3(mouse.x, mouse.y, (camera.near + camera.far) / (camera.near - camera.far));
-    // saveHere.unproject(camera);
-    // console.log('vNow', saveHere);
 }

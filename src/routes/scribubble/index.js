@@ -10,7 +10,7 @@ import { createLineGeometry, addPosition, createLineInScene, removeLastLine, get
 import { refreshMousePosition } from '../../util/mouse';
 
 import RightPanel from '../../components/panel/RightPanel';
-import { TextButton, SelectToolButton, EraseToolButton, DrawingToolButton, AddPalleteButton, PalleteButton } from '../../components/Button';
+import { TextButton, ExploreToolButton, SelectToolButton, EraseToolButton, DrawingToolButton, AddPalleteButton, PalleteButton } from '../../components/Button';
 import { ColorPicker, ColorInput, LengthInput } from '../../components/Input';
 
 import io, { connect } from 'socket.io-client';
@@ -34,6 +34,7 @@ const socket = io(server_host, {});
 // javascript:(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='//mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
 
 const MODE = {
+	EXPLORING: 'EXPLORING',
     SELECTING: 'SELECTING',
     DRAWING: 'DRAWING',
 	ERASEING: 'ERASING'
@@ -41,7 +42,7 @@ const MODE = {
 
 class Scribubble extends Component {
 	state = {
-		mode: MODE.SELECTING,
+		mode: MODE.EXPLORING,
 		openPanel: false,
 		drawingColor: '#000000',
 		linewidth: 1,
@@ -69,9 +70,9 @@ class Scribubble extends Component {
 		this.scene = new THREE.Scene(); 
 		this.scene.background = new THREE.Color( 0xFFFFFF );
 	
-		this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 10000);
+		this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.001, 10000);
 		// camera = new THREE.OrthographicCamera(  window.innerWidth / - 2,  window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 1, 10000 );
-		this.camera.position.set(0, 0, 100);
+		this.camera.position.set(0, 0, 1);
 
 		this.renderer = new THREE.WebGLRenderer({ antialias:true });
 		this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -80,16 +81,49 @@ class Scribubble extends Component {
 
 		this.controls = new OrbitControls(this.camera, this.renderer.domElement);
 
-		const geometry = new THREE.BoxGeometry(10, 10, 10)
-		const material = new THREE.MeshNormalMaterial({ transparent: true })
-		
-		const cube = new THREE.Mesh(geometry, material)
-		this.scene.add(cube);
+		this.objEntity = new THREE.Object3D();
+		this.scene.add(this.objEntity);
 
-		const cube2 = new THREE.Mesh(geometry, material)
-		cube2.position.x = 100;
-		
-		this.scene.add(cube2)
+		const geometry = new THREE.BoxGeometry( 1, 1, 1 );
+		const material = new THREE.MeshBasicMaterial( {color: 0x4CC3D9} );
+		const cube = new THREE.Mesh( geometry, material );
+		cube.position.x = -1;
+		cube.position.y = 0.5;
+		cube.position.z = -3;
+		cube.rotation.x = 0;
+		cube.rotation.y = 45;
+		cube.rotation.z = 0;
+		this.objEntity.add( cube );
+		const geometry2 = new THREE.SphereGeometry( 1.25, 36, 18 );
+		const material2 = new THREE.MeshBasicMaterial( { color: 0xEF2D5E } );
+		const sphere = new THREE.Mesh( geometry2, material2 );
+		sphere.position.x = 0;
+		sphere.position.y = 1.25;
+		sphere.position.z = -5;
+		this.objEntity.add( sphere );
+		const geometry3 = new THREE.CylinderGeometry( 0.5, 0.5, 1.5, 36 );
+		const material3 = new THREE.MeshBasicMaterial( {color: 0xFFC65D } );
+		const cylinder = new THREE.Mesh( geometry3, material3 );
+		cylinder.position.x = 1;
+		cylinder.position.y = 0.75;
+		cylinder.position.z = -3;
+		this.objEntity.add( cylinder );
+		const geometry4 = new THREE.PlaneGeometry( 4, 4 );
+		const material4 = new THREE.MeshBasicMaterial( {color: 0x7BC8A4, side: THREE.DoubleSide} );
+		const plane = new THREE.Mesh( geometry4, material4 );
+		plane.position.x = 0;
+		plane.position.y = 0;
+		plane.position.z = -4;
+		plane.rotation.x = 55;
+		plane.rotation.y = 0;
+		plane.rotation.z = 0;
+		this.objEntity.add( plane );
+
+		const sphGeometry = new THREE.SphereGeometry( 0.1 );
+		const sphMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
+		this.sphereInter = new THREE.Mesh( sphGeometry, sphMaterial );
+		this.sphereInter.visible = false;
+		this.scene.add( this.sphereInter );
 
 		this.transformControls = new TransformControls(this.camera, this.renderer.domElement);
 		this.scene.add(this.transformControls);
@@ -117,11 +151,15 @@ class Scribubble extends Component {
 
 		// 접속해 있는 유저들의 id와 Tag저장됨
 		this.nameTag = {};
+
+		// 타겟팅 중인 오브젝트
+		this.targetObj = null;
 		
 		const animate = () => {
 			this.renderer.render(this.scene, this.camera);
 			this.controls.update();
 			requestAnimationFrame(animate);
+			
 		}
 		animate();
 
@@ -150,7 +188,7 @@ class Scribubble extends Component {
 				width: data.linewidth,
 				color: data.color,
 				geo: createLineGeometry(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z))
-			}, this.scene);
+			}, this.objEntity);
 				
 			if (!this.nameTag[data.user_id]) {
 				this.nameTag[data.user_id] = new TextSprite({
@@ -161,14 +199,12 @@ class Scribubble extends Component {
 				});	
 				this.scene.add(this.nameTag[data.user_id]);
 			}
-			this.nameTag[data.user_id].position.x = data.mousePos.x;
-			this.nameTag[data.user_id].position.y = data.mousePos.y;
-			this.nameTag[data.user_id].position.z = data.mousePos.z;
+			this.nameTag[data.user_id].position.copy(data.mousePos);
 
 		});
 
         socket.on('drawing', (data) => {
-			console.log(data);
+			// console.log(this.camera.position);
 			addPosition(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z));
         });
 
@@ -187,6 +223,7 @@ class Scribubble extends Component {
 
 			for(let i = 0; i < data.line.length; i++) {
 				let line = data.line[i];
+				console.log(';', line);
 				let pos = line.linePositions;
 				let testUserId = data.userid[0]; // 데이터 구조에 오류가 있어서, 라인 작성자를 임시로 설정
 
@@ -263,37 +300,46 @@ class Scribubble extends Component {
 		let curPos = getCenterPos(this.user_id, curLine);
 		
 		let obj = new THREE.Object3D();
-		obj.position.x = curPos.x;
-		obj.position.y = curPos.y;
-		obj.position.z = curPos.z;
+		obj.position.copy(curPos);
 
 		curLine.parent = obj;
+		curLine.position.copy(curPos.negate());
 		
-		curLine.position.x = -curPos.x;
-		curLine.position.y = -curPos.y;
-		curLine.position.z = -curPos.z;
-		
-		this.scene.add(obj);
+		this.objEntity.add(obj);
 
-		this.transformControls.attach(obj);
+		// this.transformControls.attach(obj);
 	}
 
+	deleteTargetObject = () => {
+		this.transformControls.detach();
+		
+		if (this.targetObj.type === 'Line2')
+			this.objEntity.remove(this.targetObj.parent);
+		this.objEntity.remove(this.targetObj);
+	}
 
 	keyDown = (event) => {
 		let key = event.key || event.keyCode;
 
 		this.keysPressed[key] = true;
 
+		if (event.repeat)
+			return;
+
 		if ((key === ' ' || key === 32) && !this.isDrawing) {
 			this.drawStart();
 		}
 		
-		if (this.keysPressed['Control'] && event.key == 'z' && !event.repeat) {
+		if (this.keysPressed['Control'] && event.key == 'z') {
 			// removeLastLine(user_id, scene);
 
 			socket.emit('remove current', {
 				user_id: this.user_id
 			});
+		}
+		
+		if (this.keysPressed['Delete']) {
+			this.deleteTargetObject();
 		}
 
 		if (this.keysPressed['q']) {
@@ -320,11 +366,30 @@ class Scribubble extends Component {
 	mouseDown = (e) => {
 		if (e.which !== 1) return;
 
-		if (!this.transformControls.dragging)
+		if (!this.transformControls.dragging && this.sphereInter.visible) {
+			this.transformControls.attach(
+				this.targetObj.type === 'Line2' ?
+					this.targetObj.parent:
+					this.targetObj
+			);
+		}
+
+		if (!this.transformControls.dragging && this.state.mode === MODE.DRAWING)
 			this.drawStart();
 	}
 	mouseMove = (event) => {
 		refreshMousePosition(event, this.camera, this.scene.position, this.raycaster, this.mousePos);
+
+		if (this.state.mode === MODE.SELECTING) {
+			const intersects = this.raycaster.intersectObjects(this.objEntity.children, true);
+			if (intersects.length > 0) {
+				this.sphereInter.visible = true;
+				this.sphereInter.position.copy(intersects[0].point);
+				this.targetObj = intersects[0].object;
+			} else {
+				this.sphereInter.visible = false;
+			}
+		}
 		
 		if (this.isDrawing) {
 			// addPosition(user_id, mousePos);
@@ -336,7 +401,7 @@ class Scribubble extends Component {
 					z: this.mousePos.z,
 				}
 			});
-		} 
+		}
 	}
 	mouseUp = (e) => {
 		if (e.which !== 1) return;
@@ -345,31 +410,43 @@ class Scribubble extends Component {
 			this.drawEnd();
 	}
 
-	modeChange = (event, chnageToMode) => {
-		// 다른 모드 중 그림 모드로 변경할 때
-		if (this.state.mode !== MODE.DRAWING && chnageToMode === MODE.DRAWING) {
-			this.setState({ mode: MODE.DRAWING });
-
-			this.controls.enabled = false;
-
-			this.renderer.domElement.addEventListener('mousedown', this.mouseDown);
-			this.renderer.domElement.addEventListener('mouseup',  this.mouseUp);
-			
+	modeChange = (event, modeChangeTo) => {
+		if (this.state.mode === modeChangeTo)
 			return;
+
+		// 선택 모드 해제
+		if (this.state.mode === MODE.SELECTING && modeChangeTo !== MODE.SELECTING) {
+			this.renderer.domElement.removeEventListener('mousedown', this.mouseDown);
 		}
 		// 그림 모드 해제
-		else if (this.state.mode === MODE.DRAWING && chnageToMode !== MODE.DRAWING) {
-			this.setState({ mode: chnageToMode });
+		else if ((this.state.mode === MODE.DRAWING && modeChangeTo !== MODE.DRAWING)) {
+			// this.setState({ mode: modeChangeTo });
 
 			this.controls.enabled = true;
 
 			this.renderer.domElement.removeEventListener('mousedown', this.mouseDown);
 			this.renderer.domElement.removeEventListener('mouseup',  this.mouseUp);
 			
-			return;
+			// return;
 		}
 
-		this.setState({ mode: chnageToMode });
+		// 다른 모드 중 그림 모드로 변경할 때
+		if (modeChangeTo === MODE.DRAWING) {
+			// this.setState({ mode: MODE.DRAWING });
+
+			this.controls.enabled = false;
+
+			this.renderer.domElement.addEventListener('mousedown', this.mouseDown);
+			this.renderer.domElement.addEventListener('mouseup',  this.mouseUp);
+			
+			// return;
+		}		
+		// 선택 모드
+		else if (modeChangeTo === MODE.SELECTING) {
+			this.renderer.domElement.addEventListener('mousedown', this.mouseDown);
+		}
+
+		this.setState({ mode: modeChangeTo });
 	}
 
 	render() {
@@ -397,6 +474,11 @@ class Scribubble extends Component {
 			</div>
 			<div class={style.leftSide}>
 				<div class={style.toolbar}>
+					<ExploreToolButton
+						onClick={e => { this.modeChange(e, MODE.EXPLORING) }}
+						isActive={this.state.mode === MODE.EXPLORING}
+					></ExploreToolButton>
+
 					<SelectToolButton
 						onClick={e => { this.modeChange(e, MODE.SELECTING) }}
 						isActive={this.state.mode === MODE.SELECTING}
@@ -408,8 +490,7 @@ class Scribubble extends Component {
 					></DrawingToolButton>
 					
 					<EraseToolButton
-						isActive={this.state.mode === MODE.ERASEING}
-						onClick={e => { this.modeChange(e, MODE.ERASEING) }}
+						onClick={e => { this.deleteTargetObject() }}
 					></EraseToolButton>					
 				</div>
 				{
