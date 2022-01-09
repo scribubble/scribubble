@@ -7,11 +7,17 @@ import { TransformControls } from 'three/examples/jsm/controls/TransformControls
 import TextSprite from '@seregpie/three.text-sprite';
 
 import { createLineGeometry, addPosition, createLineInScene, removeLastLine, getLastLine, getCenterPos } from '../../util/drawLine';
-import { refreshMousePosition } from '../../util/mouse';
+import { refreshMousePosition, getCenterPosition } from '../../util/mouse';
 
 import RightPanel from '../../components/panel/RightPanel';
-import { TextButton, ExploreToolButton, SelectToolButton, EraseToolButton, DrawingToolButton, AddPalleteButton, PalleteButton } from '../../components/Button';
+import { 
+	TextButton,
+	ExploreToolButton, SelectToolButton, EraseToolButton, DrawingToolButton, ShapeToolButton,
+	AddPalleteButton, PalleteButton,
+	PlaneButton, SquareButton, SphereButton, CylinderButton
+} from '../../components/Button';
 import { ColorPicker, ColorInput, LengthInput } from '../../components/Input';
+import { Bar, DivisionLine } from '../../components/Bar';
 
 import io, { connect } from 'socket.io-client';
 
@@ -37,7 +43,8 @@ const MODE = {
 	EXPLORING: 'EXPLORING',
     SELECTING: 'SELECTING',
     DRAWING: 'DRAWING',
-	ERASEING: 'ERASING'
+	ERASEING: 'ERASING',
+	SHAPE: 'SHAPE'
 };
 
 class Scribubble extends Component {
@@ -204,7 +211,6 @@ class Scribubble extends Component {
 		});
 
         socket.on('drawing', (data) => {
-			// console.log(this.camera.position);
 			addPosition(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z));
         });
 
@@ -367,11 +373,13 @@ class Scribubble extends Component {
 		if (e.which !== 1) return;
 
 		if (!this.transformControls.dragging && this.sphereInter.visible) {
+			this.targetObj = this.selectingObj;
 			this.transformControls.attach(
 				this.targetObj.type === 'Line2' ?
 					this.targetObj.parent:
 					this.targetObj
 			);
+			this.setState({ drawingColor: '#' + this.targetObj.material.color.getHexString() });
 		}
 
 		if (!this.transformControls.dragging && this.state.mode === MODE.DRAWING)
@@ -385,7 +393,7 @@ class Scribubble extends Component {
 			if (intersects.length > 0) {
 				this.sphereInter.visible = true;
 				this.sphereInter.position.copy(intersects[0].point);
-				this.targetObj = intersects[0].object;
+				this.selectingObj = intersects[0].object;
 			} else {
 				this.sphereInter.visible = false;
 			}
@@ -416,6 +424,7 @@ class Scribubble extends Component {
 
 		// 선택 모드 해제
 		if (this.state.mode === MODE.SELECTING && modeChangeTo !== MODE.SELECTING) {
+			this.transformControls.detach();
 			this.renderer.domElement.removeEventListener('mousedown', this.mouseDown);
 		}
 		// 그림 모드 해제
@@ -440,7 +449,7 @@ class Scribubble extends Component {
 			this.renderer.domElement.addEventListener('mouseup',  this.mouseUp);
 			
 			// return;
-		}		
+		}
 		// 선택 모드
 		else if (modeChangeTo === MODE.SELECTING) {
 			this.renderer.domElement.addEventListener('mousedown', this.mouseDown);
@@ -449,31 +458,38 @@ class Scribubble extends Component {
 		this.setState({ mode: modeChangeTo });
 	}
 
+	createShape = (shape) => {
+		const material = new THREE.MeshBasicMaterial( { color: this.state.drawingColor } );
+		let geometry, shapeObj;
+
+		if (shape === 'SQUARE') {
+			geometry = new THREE.BoxGeometry( 0.1, 0.1, 0.1 );
+		} else if (shape === 'SPHERE') {
+			geometry = new THREE.SphereGeometry( 0.1, 32, 16 );
+		} else if (shape === 'CYLINDER') {
+			geometry = new THREE.CylinderGeometry( 0.1, 0.1, 0.1, 36 );
+		} else if (shape === 'PLANE') {
+			geometry = new THREE.PlaneGeometry( 0.1, 0.1 );
+			material.side = THREE.DoubleSide;
+		}
+
+		shapeObj = new THREE.Mesh(geometry, material);
+		shapeObj.position.copy(getCenterPosition(this.camera, this.scene.position, this.raycaster));
+		this.objEntity.add( shapeObj );
+	}
+
 	render() {
 		return (	
 		<div id="Scribubble" ref={el => this.element = el} >
 			<div class={style.rightSide}>
 				<TextButton onClick={() => { this.setState((prev) => ({ openPanel: !prev.openPanel })) }}>
-
 				</TextButton>
-				{/* <button class={style.openBT} onClick={() => { this.setState((prev) => ({ openPanel: !prev.openPanel })) }}>
-					<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-vocabulary" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-						<path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-						<path d="M10 19h-6a1 1 0 0 1 -1 -1v-14a1 1 0 0 1 1 -1h6a2 2 0 0 1 2 2a2 2 0 0 1 2 -2h6a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-6a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2z" />
-						<path d="M12 5v16" />
-						<path d="M7 7h1" />
-						<path d="M7 11h1" />
-						<path d="M16 7h1" />
-						<path d="M16 11h1" />
-						<path d="M16 15h1" />
-					</svg>
-				</button> */}
 				{
 					this.state.openPanel && <RightPanel></RightPanel>
 				}
 			</div>
 			<div class={style.leftSide}>
-				<div class={style.toolbar}>
+				<Bar>
 					<ExploreToolButton
 						onClick={e => { this.modeChange(e, MODE.EXPLORING) }}
 						isActive={this.state.mode === MODE.EXPLORING}
@@ -491,11 +507,16 @@ class Scribubble extends Component {
 					
 					<EraseToolButton
 						onClick={e => { this.deleteTargetObject() }}
-					></EraseToolButton>					
-				</div>
+					></EraseToolButton>
+					
+					<ShapeToolButton
+						isActive={this.state.mode === MODE.SHAPE}
+						onClick={e => { this.modeChange(e, MODE.SHAPE) }}
+					></ShapeToolButton>
+				</Bar>
 				{
 					this.state.mode === MODE.DRAWING &&
-					<div class={style.subbar}>
+					<Bar>
 						<ColorPicker
 							value={this.state.drawingColor}
 							onChange={e => { this.setState({ drawingColor: e.target.value })}}
@@ -507,9 +528,7 @@ class Scribubble extends Component {
 							step="0.5" min="1" max="10"
 						></LengthInput>
 
-						<div
-							style="background: #c9c9c9; width: 50%; height: .125rem;"
-						></div>
+						<DivisionLine></DivisionLine>
 
 						<AddPalleteButton
 							onClick={e => { this.setState(prev => ({ pallete: [this.state.drawingColor, ...prev.pallete]})) }}>
@@ -532,7 +551,35 @@ class Scribubble extends Component {
 								></PalleteButton>
 							)
 						}
-					</div>
+					</Bar>
+				}
+				{
+					this.state.mode === MODE.SELECTING &&
+					<Bar>
+						<ColorPicker
+							value={this.state.drawingColor}
+							onChange={e => {
+								this.setState({ drawingColor: e.target.value });
+								this.targetObj.material.color = new THREE.Color(e.target.value);
+							}}
+						></ColorPicker>
+					</Bar>
+				}
+				{
+					this.state.mode === MODE.SHAPE &&
+					<Bar>
+						<ColorPicker
+							value={this.state.drawingColor}
+							onChange={e => { this.setState({ drawingColor: e.target.value })}}
+						></ColorPicker>
+
+						<DivisionLine></DivisionLine>
+
+						<SquareButton onClick={e => { this.createShape('SQUARE') }}></SquareButton>
+						<SphereButton onClick={e => { this.createShape('SPHERE') }}></SphereButton>
+						<CylinderButton onClick={e => { this.createShape('CYLINDER') }}></CylinderButton>
+						<PlaneButton onClick={e => { this.createShape('PLANE') }}></PlaneButton>
+					</Bar>
 				}
 			</div>
 		</div>

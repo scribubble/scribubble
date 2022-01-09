@@ -106,7 +106,20 @@ export const DrawingToolButton = (props) => {
             </svg>
         </ToolButton>
     );
-}
+};
+
+export const ShapeToolButton = (props) => {
+    return (    
+        <ToolButton isActive={props.isActive} onClick={props.onClick}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M12 3l-4 7h8z"></path>
+                <circle cx="17" cy="17" r="3"></circle>
+                <rect x="4" y="14" width="6" height="6" rx="1"></rect>
+            </svg>
+        </ToolButton>
+    );
+};
 
 
 export const PalleteButton = styled(RoundButton)`
@@ -128,5 +141,53 @@ export const AddPalleteButton = (props) => {
                 <circle cx="16.5" cy="10.5" r=".5" fill="currentColor"></circle>
             </svg>
         </RoundButton>
-    )
-}
+    );
+};
+
+export const PlaneButton = (props) => {
+    return (
+        <RoundButton onClick={props.onClick}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M6.141 4.163l12 1.714a1 1 0 0 1 .859 .99v10.266a1 1 0 0 1 -.859 .99l-12 1.714a1 1 0 0 1 -1.141 -.99v-13.694a1 1 0 0 1 1.141 -.99z"></path>
+            </svg>
+        </RoundButton>
+    );
+};
+export const SphereButton = (props) => {
+    return (
+        <RoundButton onClick={props.onClick}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <circle cx="12" cy="12" r="9"></circle>
+            </svg>
+        </RoundButton>
+    );
+};
+export const CylinderButton = (props) => {
+    return (
+        <RoundButton onClick={props.onClick}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <rect x="5" y="3" width="14" height="18" rx="2"></rect>
+            </svg>
+        </RoundButton>
+    );
+};
+export const SquareButton = (props) => {
+    return (
+        <RoundButton onClick={props.onClick}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <circle cx="5" cy="5" r="2"></circle>
+                <circle cx="19" cy="5" r="2"></circle>
+                <circle cx="5" cy="19" r="2"></circle>
+                <circle cx="19" cy="19" r="2"></circle>
+                <line x1="5" y1="7" x2="5" y2="17"></line>
+                <line x1="7" y1="5" x2="17" y2="5"></line>
+                <line x1="7" y1="19" x2="17" y2="19"></line>
+                <line x1="19" y1="7" x2="19" y2="17"></line>
+            </svg>
+        </RoundButton>
+    );
+};

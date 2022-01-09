@@ -6,7 +6,7 @@
     transform: translate(0px, -50%);
     align-items: center;
 }
-.leftSide .toolbar {
+/* .leftSide .toolbar {
     display: flex;
     margin-left: 1rem;
     padding: 1rem 0.5rem;
@@ -29,7 +29,7 @@
     gap: 1rem;
     -webkit-box-shadow: 0px 0px 10px 5px rgba(0, 0, 0, 0.1);
     box-shadow: 0px 0px 10px 5px rgba(0, 0, 0, 0.1);
-}
+} */
 
 .rightSide {
     display: flex;
