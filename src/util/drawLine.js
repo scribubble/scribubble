@@ -17,9 +17,11 @@ drawData = {
 */
 
 
-/*
-    Line Geometry 생성
-*/
+/**
+ * Line Geometry 생성
+ * @param {String} user_id 유저의 고유 id
+ * @param {THREE.Vector3} point 라인의 시작위치
+ */
 export const createLineGeometry = (user_id, point) => {
     // 처음 그리는 유저라면 등록
     if (!drawData[user_id]) {
@@ -32,11 +34,6 @@ export const createLineGeometry = (user_id, point) => {
         drawData[user_id].drawingCount = 0;
         drawData[user_id].linePositions = [point.x, point.y, point.z];
     }
-
-	// drawData[user_id].drawingCount = 0;
-
-	// drawData[user_id].linePositions = [];	
-	// drawData[user_id].linePositions.push(point.x, point.y, point.z);
 	
     var geo = new LineGeometry();
     geo.setPositions(drawData[user_id].linePositions);
@@ -44,13 +41,16 @@ export const createLineGeometry = (user_id, point) => {
     return geo; 
 };
 
-/*
-    Line 오브젝트 생성
-*/
+/**
+ * Line 오브젝트 생성
+ * @param {Object} opt 라인 옵션
+ * @param {Number} opt.width 라인 두께 (default 1)
+ * @param {THREE.Color} opt.color 라인 색상 (default black)
+ */
 export const createLine = (opt) => { 
     opt = opt || {};
     opt.width = opt.width || 1;
-    opt.color = opt.color || new THREE.Color(0, 1, 1);
+    opt.color = opt.color || new THREE.Color(0, 0, 0);
  
     var matLine = new LineMaterial({
 		linewidth: opt.width,
@@ -66,53 +66,63 @@ export const createLine = (opt) => {
     return line; 
 };
 
-/*
-    Line 오브젝트 생성 후 scene 에 추가
-*/
-export const createLineInScene = (user_id, opt, scene) => {
+/**
+ * Line 오브젝트 생성 후 scene 에 추가
+ * @param {String} user_id 유저의 고유 id (socket_id)
+ * @param {Object} opt 라인 옵션
+ * @param {Number} opt.width 라인 두께 (default 1)
+ * @param {THREE.Color} opt.color 라인 색상 (default black)
+ * @param {THREE.Object3D} parent 라인의 부모
+ */
+export const createLineAndAdd = (user_id, opt, parent) => {
     drawData[user_id].myLines.push( createLine(opt) );
     
-    scene.add(getLastLine(user_id));
+    parent.add( getLastLine(user_id) );
 }
 
-
-/*
-    현재 좌표 추가
-     - 좌표 추가하고 오브젝트 갱신함
-*/
+/**
+ * 현재 좌표 추가
+ * @param {String} user_id 유저의 고유 id
+ * @param {THREE.Vector3} point 라인의 시작위치
+ */
 export const addPosition = (user_id, point) => {
-	drawData[user_id].linePositions.push(point.x, point.y, point.z);
+	drawData[user_id].linePositions.push( point.x, point.y, point.z );
 
 	getLastLine(user_id).geometry._maxInstanceCount = ++drawData[user_id].drawingCount;
-	getLastLine(user_id).geometry.setPositions(drawData[user_id].linePositions);
+	getLastLine(user_id).geometry.setPositions( drawData[user_id].linePositions );
 }
 
-/*
-    마지막으로 그린 선 Pop
-*/
+/**
+ * 마지막으로 그린 선 Pop
+ * @param {String} user_id 유저의 고유 id
+ */
 export const popLastLine = (user_id) => {
     return drawData[user_id].myLines.pop();
 }
 
-/*
-    마지막으로 그린 선 scene 에서 제거
-*/
-export const removeLastLine = (user_id, scene) => {
+/**
+ * 마지막으로 그린 선 scene 에서 제거
+ * @param {String} user_id 유저의 고유 id
+ * @param {THREE.Object3D} parent 라인의 부모
+ */
+export const removeLastLine = (user_id, parent) => {
     if (drawData[user_id].myLines.length)
-        scene.remove(popLastLine(user_id));
+        parent.remove( popLastLine(user_id) );
 }
 
-/*
-    마지막으로 그린 선 가져오기
-*/
+/**
+ * 마지막으로 그린 선 가져오기
+ * @param {String} user_id 유저의 고유 id
+ */
 export const getLastLine = (user_id) => {
-    return drawData[user_id].myLines[drawData[user_id].myLines.length - 1];
+    return drawData[user_id].myLines[ drawData[user_id].myLines.length - 1 ];
 }
 
-/*
-    마지막으로 그린 선 가져오기
-*/
-export const getCenterPos = (user_id, line) => {
+/**
+ * 선의 중간위치 받아오기
+ * @param {Line2} line 대상이 될 선
+ */
+export const getCenterPos = (line) => {
     let arr = line.geometry.getAttribute('instanceStart').array;
 
     return new THREE.Vector3(

@@ -1,6 +1,23 @@
 import { useEffect, useRef } from 'preact/hooks';
 
-import style from './style.css'
+import styled from 'styled-components';
+
+const Panel = styled.div`
+	width: 20rem;
+	height: calc(100vh - 0.5rem);
+	border-radius: 1rem;
+	margin: 0.25rem 0.25rem 0.25rem 0.5rem;
+	background-color: white;
+	-webkit-box-shadow: 0px 0px 10px 5px rgba(0, 0, 0, 0.1);
+	box-shadow: 0px 0px 10px 5px rgba(0, 0, 0, 0.1);
+	&:after {
+		content: '';
+		position: absolute;
+		width: .25rem;
+		height: 100%;
+		cursor: ew-resize;
+	}
+`;
 
 const RightPanel = () => {
     const rightPanel = useRef(null);
@@ -13,12 +30,10 @@ const RightPanel = () => {
 	function initRightPanel() {
 		const BORDER_SIZE = 4;
 		
-		let m_pos;
-		function resize(e){
-		  const dx = m_pos - e.x;
-		  m_pos = e.x;
-		  
-          const newSize = (parseInt(getComputedStyle(rightPanel.current, '').width) + dx);
+		let tempPos;
+		function resize(e) {		  
+          const newSize = (parseInt(getComputedStyle(rightPanel.current, '').width) + tempPos - e.x);
+		  tempPos = e.x;
 
 		  if (newSize > MIN_WIDTH)
             rightPanel.current.style.width = newSize + "px";
@@ -26,7 +41,7 @@ const RightPanel = () => {
 		
 		rightPanel.current.addEventListener("mousedown", (e) => {
 		  if (e.offsetX < BORDER_SIZE) {
-			m_pos = e.x;
+			tempPos = e.x;
 			document.addEventListener("mousemove", resize, false);
 		  }
 		}, false);
@@ -37,7 +52,7 @@ const RightPanel = () => {
 	}
 
 	return (
-		<div id="right-panel" ref={rightPanel} class={style.rightPanel}></div>
+		<Panel ref={rightPanel}></Panel>
 	);
 };
 

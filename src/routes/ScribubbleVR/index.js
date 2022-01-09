@@ -1,6 +1,6 @@
 import { useEffect } from 'preact/hooks';
 
-import { createLineGeometry, addPosition, createLineInScene, removeLastLine } from '../../util/drawLine';
+import { createLineGeometry, addPosition, createLineAndAdd, removeLastLine } from '../../util/drawLine';
 
 
 import io from 'socket.io-client';
@@ -111,7 +111,7 @@ AFRAME.registerComponent('primary-hand',{
         });
 
 		socket.on('draw start', (data) => {
-			createLineInScene(data.user_id, {
+			createLineAndAdd(data.user_id, {
 				width: data.linewidth,
 				color: data.color,
 				geo: createLineGeometry(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z))
@@ -132,7 +132,7 @@ AFRAME.registerComponent('primary-hand',{
 				let pos = line.linePositions;
 				let testUserId = data.userid[0]; // 데이터 구조에 오류가 있어서, 라인 작성자를 임시로 설정
 
-				createLineInScene(testUserId, {
+				createLineAndAdd(testUserId, {
 					width: line.lineWidth,
 					color: line.lineColor,
 					geo: createLineGeometry(
@@ -157,7 +157,7 @@ AFRAME.registerComponent('primary-hand',{
 			this.isDrawing = true;
 			this.lastPos = this.getLocalPenPos();
 			
-			// createLineInScene({
+			// createLineAndAdd({
 			// 	width: 1,
 			// 	color: new THREE.Color(0, 1, 1),
 			// 	geo: createLineGeometry(data.user_id, this.lastPos)
