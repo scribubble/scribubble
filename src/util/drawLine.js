@@ -46,22 +46,27 @@ export const createLineGeometry = (user_id, point) => {
  * @param {Object} opt 라인 옵션
  * @param {Number} opt.width 라인 두께 (default 1)
  * @param {THREE.Color} opt.color 라인 색상 (default black)
+ * @param {Boolean} opt.dashed dashed 모드 (default false)
  */
 export const createLine = (opt) => { 
     opt = opt || {};
     opt.width = opt.width || 1;
     opt.color = opt.color || new THREE.Color(0, 0, 0);
- 
+    opt.dashed = opt.dashed || false;
+
     var matLine = new LineMaterial({
+		color: 0xff0000, 
 		linewidth: opt.width,
-		color: opt.color
+		dashSize: 0.1,
+		gapSize: 0.1,
+		dashed: opt.dashed
 	});
-    // matLine.worldUnits = true;
 
     if (window)
         matLine.resolution.set(window.innerWidth, window.innerHeight);
  
     var line = new Line2(opt.geo, matLine);
+    line.computeLineDistances();
 
     return line; 
 };
@@ -72,6 +77,7 @@ export const createLine = (opt) => {
  * @param {Object} opt 라인 옵션
  * @param {Number} opt.width 라인 두께 (default 1)
  * @param {THREE.Color} opt.color 라인 색상 (default black)
+ * @param {Boolean} opt.dashed dashed 모드 (default false)
  * @param {THREE.Object3D} parent 라인의 부모
  */
 export const createLineAndAdd = (user_id, opt, parent) => {
@@ -90,6 +96,7 @@ export const addPosition = (user_id, point) => {
 
 	getLastLine(user_id).geometry._maxInstanceCount = ++drawData[user_id].drawingCount;
 	getLastLine(user_id).geometry.setPositions( drawData[user_id].linePositions );
+    getLastLine(user_id).computeLineDistances();
 }
 
 /**

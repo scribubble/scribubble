@@ -5,6 +5,12 @@ export const RoundedButton = styled.button`
     border-radius: .25rem;
     background: transparent;
     cursor: pointer;
+    &:disabled {
+        cursor: auto;
+    }
+    &:not([disabled]):hover svg {
+        stroke: #5c5c5c;
+    }
 `;
 export const RoundButton = styled.button`
     border: none;
@@ -12,14 +18,20 @@ export const RoundButton = styled.button`
     background: ${(props) => props.background ? props.background : 'transparent'};
     cursor: pointer;
     ${(props) => props.customStyle}
+    &:disabled {
+        cursor: auto;
+    }
+    &:not([disabled]):hover svg {
+        stroke: #5c5c5c;
+    }
 `;
 
 export const ToolButton = styled(RoundedButton)`
     svg {
-        stroke: ${(props) => props.isActive ? '#FF2052': 'currentColor'}
+        stroke: ${(props) => props.isActive ? '#FF2052': 'currentColor'};
     }
-    &:hover svg {
-        stroke: ${(props) => props.isActive ? '#FF2052': '#5c5c5c'}
+    &:not([disabled]):hover svg {
+        stroke: ${(props) => props.isActive ? '#FF2052': '#5c5c5c'};
     }
 `;
 
@@ -54,14 +66,18 @@ export const TextButton = (props) =>  {
     );
 };
 
-
+//=============================================================
+// Tool Button
+//=============================================================
 export const ExploreToolButton = (props) => {
     return (
         <ToolButton isActive={props.isActive} onClick={props.onClick}>
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <circle cx="12" cy="12" r="2"></circle>
-                <path d="M22 12c-2.667 4.667 -6 7 -10 7s-7.333 -2.333 -10 -7c2.667 -4.667 6 -7 10 -7s7.333 2.333 10 7"></path>
+                <path d="M8 13v-7.5a1.5 1.5 0 0 1 3 0v6.5"></path>
+                <path d="M11 5.5v-2a1.5 1.5 0 1 1 3 0v8.5"></path>
+                <path d="M14 5.5a1.5 1.5 0 0 1 3 0v6.5"></path>
+                <path d="M17 7.5a1.5 1.5 0 0 1 3 0v8.5a6 6 0 0 1 -6 6h-2h.208a6 6 0 0 1 -5.012 -2.7a69.74 69.74 0 0 1 -.196 -.3c-.312 -.479 -1.407 -2.388 -3.286 -5.728a1.5 1.5 0 0 1 .536 -2.022a1.867 1.867 0 0 1 2.28 .28l1.47 1.47"></path>
             </svg>
         </ToolButton>
     );
@@ -83,9 +99,9 @@ export const SelectToolButton = (props) => {
     );
 };
 
-export const EraseToolButton = (props) => {
+export const EraseToolButton = ({ isActive, onClick, disabled=false }) => {
     return (
-        <ToolButton isActive={props.isActive} onClick={props.onClick}>
+        <ToolButton isActive={isActive} onClick={onClick} disabled={disabled}>
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                 <path d="M19 19h-11l-4 -4a1 1 0 0 1 0 -1.41l10 -10a1 1 0 0 1 1.41 0l5 5a1 1 0 0 1 0 1.41l-9 9"></path>
@@ -121,7 +137,26 @@ export const ShapeToolButton = (props) => {
     );
 };
 
+//=============================================================
+// Drawing Button
+//=============================================================
+export const DashedButton = (props) => {
+    return (
+        <ToolButton isActive={props.isActive} onClick={props.onClick}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M5 12h2"></path>
+                <path d="M17 12h2"></path>
+                <path d="M11 12h2"></path>
+            </svg>
+        </ToolButton>
+    );
+};
 
+
+//=============================================================
+// Pallete Button
+//=============================================================
 export const PalleteButton = styled(RoundButton)`
     background: ${(props) => props.color};
     width: 1.25rem;
@@ -144,6 +179,9 @@ export const AddPalleteButton = (props) => {
     );
 };
 
+//=============================================================
+// Shape Button
+//=============================================================
 export const PlaneButton = (props) => {
     return (
         <RoundButton onClick={props.onClick}>
