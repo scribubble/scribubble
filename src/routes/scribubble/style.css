@@ -10,7 +10,15 @@
 .rightSide {
     display: flex;
     position: fixed;
+    height: 100%;
     right: 0px;
     top: 0px;
     align-items: flex-start;
+}
+.rightSideUI {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-end;
+    height: 100%;
 }
