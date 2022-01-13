@@ -13,10 +13,11 @@ import {
 	TextButton,
 	ExploreToolButton, SelectToolButton, EraseToolButton, DrawingToolButton, ShapeToolButton,
 	AddPalleteButton, PalleteButton,
-	PlaneButton, SquareButton, SphereButton, CylinderButton
+	PlaneButton, SquareButton, SphereButton, CylinderButton,
+	PlusButton, MinusButton
 } from '../../components/Button';
-import { ColorPicker, LengthInput } from '../../components/Input';
-import { Bar, DivisionLine } from '../../components/Bar';
+import { ColorPicker, LengthInput, ZoomInput } from '../../components/Input';
+import { ColBar, DivisionLine, RowBottomBar } from '../../components/Bar';
 
 import io, { connect } from 'socket.io-client';
 
@@ -50,8 +51,8 @@ class Scribubble extends Component {
 		openPanel: false,
 		drawingColor: '#000000',
 		linewidth: 1,
-		pallete: [
-		]
+		pallete: [],
+		zoom: 3
 	};
 
 	constructor() {
@@ -82,10 +83,22 @@ class Scribubble extends Component {
 		this.element.appendChild(this.renderer.domElement);
 
 		this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+		
+		document.addEventListener('mousewheel', (e) => {
+			console.log(this.controls.getDistance());
+			
+			this.setState({ zoom:  this.controls.getDistance() });
+		})
+		this.controls.addEventListener('change', (e) => {
+			console.log('AA', this.camera.position.z);
+		})
+
+		this.controls.maxDistance = 10;
 
 		// 다른 오브젝트들의 부모가 될 상위 오브젝트 (line 및 도형 등 선택이 가능한 오브젝트들의 부모)
 		this.objEntity = new THREE.Object3D();
 		this.scene.add(this.objEntity);
+		console.log('@@@@@@@@', this.controls.getDistance());
 
 		// 선택모드 시 선택될 수 있는 오브젝트 위치를 보여줄 오브젝트
 		const sphGeometry = new THREE.SphereGeometry( 0.1 );
@@ -102,6 +115,40 @@ class Scribubble extends Component {
 			this.controls.enabled = !e.value;
 		});
 		
+		const geometry = new THREE.BoxGeometry( 1, 1, 1 );
+		const material = new THREE.MeshBasicMaterial( {color: 0x4CC3D9} );
+		const cube = new THREE.Mesh( geometry, material );
+		cube.position.x = -1;
+		cube.position.y = 0.5;
+		cube.position.z = -3;
+		cube.rotation.x = 0;
+		cube.rotation.y = 45;
+		cube.rotation.z = 0;
+		this.objEntity.add( cube );
+		const geometry2 = new THREE.SphereGeometry( 1.25, 36, 18 );
+		const material2 = new THREE.MeshBasicMaterial( { color: 0xEF2D5E } );
+		const sphere = new THREE.Mesh( geometry2, material2 );
+		sphere.position.x = 0;
+		sphere.position.y = 1.25;
+		sphere.position.z = -5;
+		this.objEntity.add( sphere );
+		const geometry3 = new THREE.CylinderGeometry( 0.5, 0.5, 1.5, 36 );
+		const material3 = new THREE.MeshBasicMaterial( {color: 0xFFC65D } );
+		const cylinder = new THREE.Mesh( geometry3, material3 );
+		cylinder.position.x = 1;
+		cylinder.position.y = 0.75;
+		cylinder.position.z = -3;
+		this.objEntity.add( cylinder );
+		const geometry4 = new THREE.PlaneGeometry( 4, 4 );
+		const material4 = new THREE.MeshBasicMaterial( {color: 0x7BC8A4, side: THREE.DoubleSide} );
+		const plane = new THREE.Mesh( geometry4, material4 );
+		plane.position.x = 0;
+		plane.position.y = 0;
+		plane.position.z = -4;
+		plane.rotation.x = 55;
+		plane.rotation.y = 0;
+		plane.rotation.z = 0;
+		this.objEntity.add( plane );
 		this.renderer.render( this.scene, this.camera );
 
 		this.raycaster = new THREE.Raycaster();
@@ -128,7 +175,6 @@ class Scribubble extends Component {
 			this.renderer.render(this.scene, this.camera);
 			this.controls.update();
 			requestAnimationFrame(animate);
-			
 		}
 		animate();
 	}
@@ -450,18 +496,30 @@ class Scribubble extends Component {
 		this.objEntity.add( shapeObj );
 	}
 
+	zoomControl = (diff) => {
+		this.setState(prev => ({ zoom: prev.zoom + diff }));
+		// this.controls.zoom
+	}
+
 	render() {
 		return (	
 		<div id="Scribubble" ref={el => this.element = el} >
 			<div class={style.rightSide}>
-				<TextButton onClick={() => { this.setState((prev) => ({ openPanel: !prev.openPanel })) }}>
-				</TextButton>
+				<div class={style.rightSideUI}>
+					<TextButton onClick={() => { this.setState((prev) => ({ openPanel: !prev.openPanel })) }}>
+					</TextButton>
+					<RowBottomBar>
+						<MinusButton onClick={() => this.zoomControl(-0.01)}></MinusButton>
+						<ZoomInput value={this.state.zoom} min={0} max={10} step={0.01}></ZoomInput>
+						<PlusButton onClick={() => this.zoomControl(0.01)}></PlusButton>
+					</RowBottomBar>
+				</div>
 				{
 					this.state.openPanel && <RightPanel></RightPanel>
 				}
 			</div>
 			<div class={style.leftSide}>
-				<Bar>
+				<ColBar>
 					<ExploreToolButton
 						onClick={e => { this.modeChange(MODE.EXPLORING) }}
 						isActive={this.state.mode === MODE.EXPLORING}
@@ -485,10 +543,10 @@ class Scribubble extends Component {
 						isActive={this.state.mode === MODE.SHAPE}
 						onClick={e => { this.modeChange(MODE.SHAPE) }}
 					></ShapeToolButton>
-				</Bar>
+				</ColBar>
 				{
 					this.state.mode === MODE.DRAWING &&
-					<Bar>
+					<ColBar>
 						<ColorPicker
 							value={this.state.drawingColor}
 							onChange={e => { this.setState({ drawingColor: e.target.value })}}
@@ -523,11 +581,11 @@ class Scribubble extends Component {
 								></PalleteButton>
 							)
 						}
-					</Bar>
+					</ColBar>
 				}
 				{
 					this.state.mode === MODE.SELECTING &&
-					<Bar>
+					<ColBar>
 						<ColorPicker
 							value={this.state.drawingColor}
 							onChange={e => {
@@ -535,11 +593,11 @@ class Scribubble extends Component {
 								this.targetObj.material.color = new THREE.Color(e.target.value);
 							}}
 						></ColorPicker>
-					</Bar>
+					</ColBar>
 				}
 				{
 					this.state.mode === MODE.SHAPE &&
-					<Bar>
+					<ColBar>
 						<ColorPicker
 							value={this.state.drawingColor}
 							onChange={e => { this.setState({ drawingColor: e.target.value })}}
@@ -551,7 +609,7 @@ class Scribubble extends Component {
 						<SphereButton onClick={e => { this.createShape('SPHERE') }}></SphereButton>
 						<CylinderButton onClick={e => { this.createShape('CYLINDER') }}></CylinderButton>
 						<PlaneButton onClick={e => { this.createShape('PLANE') }}></PlaneButton>
-					</Bar>
+					</ColBar>
 				}
 			</div>
 		</div>
