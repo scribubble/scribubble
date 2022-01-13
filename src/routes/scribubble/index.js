@@ -14,6 +14,7 @@ import {
 	ExploreToolButton, SelectToolButton, EraseToolButton, DrawingToolButton, ShapeToolButton,
 	AddPalleteButton, PalleteButton,
 	PlaneButton, SquareButton, SphereButton, CylinderButton,
+	DashedButton,
 	PlusButton, MinusButton
 } from '../../components/Button';
 import { ColorPicker, LengthInput, ZoomInput } from '../../components/Input';
@@ -51,6 +52,7 @@ class Scribubble extends Component {
 		openPanel: false,
 		drawingColor: '#000000',
 		linewidth: 1,
+		lineDashed: false,
 		pallete: [],
 		zoom: 3
 	};
@@ -202,6 +204,7 @@ class Scribubble extends Component {
 			createLineAndAdd(data.user_id, {
 				width: data.linewidth,
 				color: data.color,
+				dashed: data.dashed,
 				geo: createLineGeometry(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z))
 			}, this.objEntity);
 				
@@ -244,6 +247,7 @@ class Scribubble extends Component {
 				createLineAndAdd(testUserId, {
 					width: line.lineWidth,
 					color: line.lineColor,
+					dashed: line.dashed,
 					geo: createLineGeometry(
 						testUserId, 
 						new THREE.Vector3(pos[0].x, pos[0].y, pos[0].z))
@@ -299,6 +303,7 @@ class Scribubble extends Component {
 			user_id: this.user_id,
 			linewidth: this.state.linewidth,
 			color: this.state.drawingColor,
+			dashed: this.state.lineDashed,
 			mousePos: {
 				x: this.mousePos.x,
 				y: this.mousePos.y,
@@ -328,11 +333,16 @@ class Scribubble extends Component {
 	 * 현재 target 오브젝트 삭제
 	 */
 	deleteTargetObject = () => {
+		if (!this.targetObj)
+			return;
+
 		this.transformControls.detach();
 		
 		if (this.targetObj.type === 'Line2')
 			this.objEntity.remove(this.targetObj.parent);
 		this.objEntity.remove(this.targetObj);
+
+		this.targetObj = null;
 	}
 
 	keyDown = (event) => {
@@ -537,74 +547,71 @@ class Scribubble extends Component {
 					
 					<EraseToolButton
 						onClick={e => { this.deleteTargetObject() }}
+						disabled={ !this.targetObj }
 					></EraseToolButton>
 					
 					<ShapeToolButton
 						isActive={this.state.mode === MODE.SHAPE}
 						onClick={e => { this.modeChange(MODE.SHAPE) }}
 					></ShapeToolButton>
+
+					<ColorPicker
+						value={this.state.drawingColor}
+						onChange={e => { 
+							this.setState({ drawingColor: e.target.value });
+							if (this.targetObj) {
+								this.targetObj.material.color = new THREE.Color(e.target.value);
+							}
+						}}
+					></ColorPicker>
+
+					<DivisionLine></DivisionLine>
+
+					<AddPalleteButton
+						onClick={e => { this.setState(prev => ({ pallete: [this.state.drawingColor, ...prev.pallete]})) }}>
+					</AddPalleteButton>
+					{
+						this.state.pallete.map((color, idx) => 
+							<PalleteButton
+								color={color}
+								selecting={this.state.drawingColor === color}
+								onClick={e => {
+									if (this.state.drawingColor === color) {
+										let arr = [...this.state.pallete];
+										arr.splice(idx, 1);
+										this.setState({ pallete: arr });
+									} else {
+										this.setState({ drawingColor: color });
+									}
+
+									if (this.targetObj)
+										this.targetObj.material.color = new THREE.Color(color);
+								}}
+							></PalleteButton>
+						)
+					}
 				</ColBar>
 				{
 					this.state.mode === MODE.DRAWING &&
 					<ColBar>
-						<ColorPicker
-							value={this.state.drawingColor}
-							onChange={e => { this.setState({ drawingColor: e.target.value })}}
-						></ColorPicker>
+						<DashedButton
+							onClick={e => {
+								this.setState(prev => ({ lineDashed: !prev.lineDashed }))
+							}}
+							isActive={ this.state.lineDashed }
+						>
+						</DashedButton>
 						
 						<LengthInput
 							value={this.state.linewidth}
 							onChange={e => { this.setState({ linewidth: e.target.value })}}
 							step="0.5" min="1" max="10"
 						></LengthInput>
-
-						<DivisionLine></DivisionLine>
-
-						<AddPalleteButton
-							onClick={e => { this.setState(prev => ({ pallete: [this.state.drawingColor, ...prev.pallete]})) }}>
-						</AddPalleteButton>
-
-						{
-							this.state.pallete.map((color, idx) => 
-								<PalleteButton
-									color={color}
-									selecting={this.state.drawingColor === color}
-									onClick={e => {
-										if (this.state.drawingColor === color) {
-											let arr = [...this.state.pallete];
-											arr.splice(idx, 1);
-											this.setState({ pallete: arr });
-										} else {
-											this.setState({ drawingColor: color });
-										}
-									}}
-								></PalleteButton>
-							)
-						}
-					</ColBar>
-				}
-				{
-					this.state.mode === MODE.SELECTING &&
-					<ColBar>
-						<ColorPicker
-							value={this.state.drawingColor}
-							onChange={e => {
-								this.setState({ drawingColor: e.target.value });
-								this.targetObj.material.color = new THREE.Color(e.target.value);
-							}}
-						></ColorPicker>
-					</ColBar>
-				}
+				</ColBar>
+        }
 				{
 					this.state.mode === MODE.SHAPE &&
 					<ColBar>
-						<ColorPicker
-							value={this.state.drawingColor}
-							onChange={e => { this.setState({ drawingColor: e.target.value })}}
-						></ColorPicker>
-
-						<DivisionLine></DivisionLine>
-
 						<SquareButton onClick={e => { this.createShape('SQUARE') }}></SquareButton>
 						<SphereButton onClick={e => { this.createShape('SPHERE') }}></SphereButton>
 						<CylinderButton onClick={e => { this.createShape('CYLINDER') }}></CylinderButton>
