@@ -40,3 +40,18 @@ export const LengthInput = styled.input.attrs(props => ({
     width: .5rem;
     height: 6rem;
 `;
+
+export const ZoomInput = styled.input.attrs(props => ({
+    type: "number"
+}))`
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    width: 2rem;
+    border: none;
+    font-size: 1rem;
+    text-align: center;
+    -moz-appearance: textfield;
+`;
