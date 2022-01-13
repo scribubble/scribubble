@@ -55,7 +55,7 @@ export const createLine = (opt) => {
     opt.dashed = opt.dashed || false;
 
     var matLine = new LineMaterial({
-		color: 0xff0000, 
+		color: opt.color, 
 		linewidth: opt.width,
 		dashSize: 0.1,
 		gapSize: 0.1,
