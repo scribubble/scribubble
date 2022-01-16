@@ -19,7 +19,7 @@ const Home = () => {
   );
 };
 
-export default Home;
+//export default Home;
 
 const Background = styled.div`
   background-color: red;
