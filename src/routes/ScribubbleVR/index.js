@@ -2,21 +2,22 @@ import { useEffect } from 'preact/hooks';
 
 import { createLineGeometry, addPosition, createLineAndAdd, removeLastLine } from '../../util/drawLine';
 
+import './colorpicker.js';
 
 import io from 'socket.io-client';
-const server_host = ":4000";
+// const server_host = ":4000";
 // https 로 테스트할때
-// const server_host = "https:// :4000";
+const server_host = "https://175.123.65.79:4000";
 
-const socket = io(server_host, {});
+// const socket = io(server_host, {});
 // https 로 테스트할때
-// const socket = io(server_host, {
-// 	// secure:true,
-// 	withCredentials: true,
-// 	extraHeaders: {
-// 	  "my-custom-header": "abcd"
-// 	}
-// });
+const socket = io(server_host, {
+	// secure:true,
+	withCredentials: true,
+	extraHeaders: {
+	  "my-custom-header": "abcd"
+	}
+});
 
 let palleteIdx = 0;
 let pallete = [
@@ -46,12 +47,13 @@ let lineWidth = lineList[lineIdx];
 AFRAME.registerComponent('scribubble', {
 	init: function () {
 		this.initListener();
+		this.ASSSS = 10000;
 	},
 
 	initListener: function() {
 	}
 });
-  
+
 AFRAME.registerComponent('primary-hand',{
 	schema: {
 		scribubble: { type: 'selector', default: '#scribubble' }
@@ -68,8 +70,8 @@ AFRAME.registerComponent('primary-hand',{
 
 		this.distThresh = 0.001;
 
-		this.scribubbleEnt = scribubble;
-		this.scribubbleComp = scribubble.components.scribubble;
+		this.scribubbleEntity = scribubble.object3D;
+		this.scribubbleComponent = scribubble.components.scribubble;
 
 		// primary controller 모델링 설정
         var penSphere = document.querySelector("#penSpherePrimary");
@@ -115,7 +117,7 @@ AFRAME.registerComponent('primary-hand',{
 				width: data.linewidth,
 				color: data.color,
 				geo: createLineGeometry(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z))
-			}, this.scribubbleEnt.object3D);
+			}, this.scribubbleEntity);
 		});
 
         socket.on('drawing', (data) => {
@@ -123,7 +125,7 @@ AFRAME.registerComponent('primary-hand',{
         });
 
 		socket.on('remove current', (data) => {
-			removeLastLine(data.user_id, this.scribubbleEnt.object3D);
+			removeLastLine(data.user_id, this.scribubbleEntity);
 		});
 
 		socket.on('get saved bubble', (data) => {
@@ -138,7 +140,7 @@ AFRAME.registerComponent('primary-hand',{
 					geo: createLineGeometry(
 						testUserId, 
 						new THREE.Vector3(pos[0].x, pos[0].y, pos[0].z))
-				}, this.scribubbleEnt.object3D);
+				}, this.scribubbleEntity);
 				
 				for(let j = 1; j < pos.length; j++) {
 					addPosition(testUserId, new THREE.Vector3(pos[j].x, pos[j].y, pos[j].z));
@@ -146,9 +148,10 @@ AFRAME.registerComponent('primary-hand',{
 			}
 		});
 
-		this.el.addEventListener('triggerdown', e => this.triggerdown(e));
-		this.el.addEventListener('triggerup', e => this.triggerup(e));
-		this.el.addEventListener('bbuttondown', e => this.bbuttondown(e));
+		// this.el.addEventListener('triggerdown', e => this.triggerdown(e));
+		// this.el.addEventListener('triggerup', e => this.triggerup(e));
+		// this.el.addEventListener('bbuttondown', e => this.bbuttondown(e));
+		
 		// this.el.addEventListener('thumbstickmoved', e => this.logThumbstick(e));
 	},
 	
@@ -161,7 +164,7 @@ AFRAME.registerComponent('primary-hand',{
 			// 	width: 1,
 			// 	color: new THREE.Color(0, 1, 1),
 			// 	geo: createLineGeometry(data.user_id, this.lastPos)
-			// }, this.scribubbleEnt.object3D);
+			// }, this.scribubbleEntity);
 
 			socket.emit('draw start', {
 				user_id: this.user_id,
@@ -191,7 +194,7 @@ AFRAME.registerComponent('primary-hand',{
 
 		this.pen.localToWorld(pos);
 
-		this.scribubbleEnt.object3D.worldToLocal(pos);
+		this.scribubbleEntity.worldToLocal(pos);
 
 		return pos;
 	},
@@ -206,13 +209,16 @@ AFRAME.registerComponent('primary-hand',{
 
 AFRAME.registerComponent('secondary-hand',{
 	schema: {
-		penSphereSecondary: { type: 'selector', default: '#penSphereSecondary' }
+		penSphereSecondary: { type: 'selector', default: '#penSphereSecondary' },
+		colorpicker: { type: 'selector', default: '#colorpicker' }
 	},
 
 	init: function init () {
 		// secondary controller 모델링 설정
-        var penSphere = document.querySelector("#penSphereSecondary");
-		this.el.setObject3D('penSphereSecondary', penSphere.object3D);
+        // var penSphere = document.querySelector("#penSphereSecondary");
+		// this.el.setObject3D('penSphereSecondary', penSphere.object3D);
+
+		this.el.setObject3D('colorpicker', this.data.colorpicker.object3D);
 		
 		this.penSphereSecondaryEnt = penSphereSecondary;
 		this.penSphereSecondaryComp = penSphereSecondary.components.scribubble;
@@ -249,6 +255,7 @@ AFRAME.registerComponent('secondary-hand',{
 	}
 });
 
+
 const ScribubbleVR = () => {
 
 	useEffect(() => {
@@ -265,7 +272,7 @@ const ScribubbleVR = () => {
 
 
 	return (
-		<a-scene id="scene">
+		<a-scene id="scene" cursor="rayOrigin: mouse">
 			<a-sky color="#fff"></a-sky>
 
 			<a-camera 
@@ -278,6 +285,13 @@ const ScribubbleVR = () => {
 				scribubble
 				id="scribubble"
 			></a-entity>
+
+			<a-entity colorpicker="colorWheel: #colorWheel; lightWheel: #lightWheel; target: #target;" id="colorpicker" class="wheels">
+				<a-circle id="colorWheel" position="-1 0.5 -3" rotation="0 0 0"  class="wheels"></a-circle>
+				<a-plane id="lightWheel" position="0.2 0.5 -3" width="0.1" height="2" color="#7BC8A4"  class="wheels"></a-plane>
+			</a-entity>
+
+			<a-box id="target" position="1 0 -3"></a-box>
 
 			<a-entity
 				secondary-hand="penSphereSecondary: #penSphereSecondary"
@@ -300,10 +314,15 @@ const ScribubbleVR = () => {
 				radius="0.01" 
 				material="opacity: 0.7"
 			></a-sphere>
-<a-box position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9" shadow="" material="" geometry=""></a-box>
-<a-sphere position="0 1.25 -5" radius="1.25" color="#EF2D5E" shadow="" material="" geometry=""></a-sphere>
-<a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D" shadow="" material="" geometry=""></a-cylinder>
-<a-plane position="0 0 -4" rotation="-90 0 0" width="4" height="4" color="#7BC8A4" shadow="" material="" geometry=""></a-plane>
+
+			{/* <a-entity laser-controls="hand: left;" raycaster="lineColor: red; lineOpacity: 0.5"></a-entity> */}
+			<a-entity laser-controls="hand: right;" raycaster="objects: .wheels; lineColor: blue; lineOpacity: 0.5"></a-entity>
+
+
+			{/* <a-box position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9" shadow="" material="" geometry=""></a-box>
+			<a-sphere position="0 1.25 -5" radius="1.25" color="#EF2D5E" shadow="" material="" geometry=""></a-sphere>
+			<a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D" shadow="" material="" geometry=""></a-cylinder>
+			<a-plane position="0 0 -4" rotation="-90 0 0" width="4" height="4" color="#7BC8A4" shadow="" material="" geometry=""></a-plane> */}
 		</a-scene>
 	);
 };
