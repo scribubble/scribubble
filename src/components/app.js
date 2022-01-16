@@ -11,6 +11,10 @@ const App = () => (
 			<Home path="/"/>
 			<Scribubble path="/test"></Scribubble>
 			<AsyncRoute
+				path="/homebubble"
+				getComponent={() => import('../routes/Home/homeBubble').then(module => module.default)}
+			></AsyncRoute>
+			<AsyncRoute
 				path="/web"
 				getComponent={() => import('../routes/Scribubble').then(module => module.default)}
 			></AsyncRoute>
