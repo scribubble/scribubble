@@ -34,7 +34,7 @@ let pallete = [
 	'#0a9106',
 	'#0d7a0a'
 ]
-let color = pallete[palleteIdx];
+let _drawingColor = pallete[palleteIdx];
 let lineList = [
 	1, 5, 10, 30
 ];
@@ -151,7 +151,7 @@ AFRAME.registerComponent('primary-hand',{
 		// this.el.addEventListener('triggerdown', e => this.triggerdown(e));
 		// this.el.addEventListener('triggerup', e => this.triggerup(e));
 		// this.el.addEventListener('bbuttondown', e => this.bbuttondown(e));
-		
+
 		// this.el.addEventListener('thumbstickmoved', e => this.logThumbstick(e));
 	},
 	
@@ -169,7 +169,7 @@ AFRAME.registerComponent('primary-hand',{
 			socket.emit('draw start', {
 				user_id: this.user_id,
 				linewidth: lineWidth,
-				color: color,
+				color: _drawingColor,
 				mousePos: {
 					x: this.lastPos.x,
 					y: this.lastPos.y,
@@ -210,20 +210,19 @@ AFRAME.registerComponent('primary-hand',{
 AFRAME.registerComponent('secondary-hand',{
 	schema: {
 		penSphereSecondary: { type: 'selector', default: '#penSphereSecondary' },
-		colorpicker: { type: 'selector', default: '#colorpicker' }
+		colorpicker: { type: 'selector', default: '#colorpicker' },
+		target: { type: 'selector', default: '#target' }
 	},
 
 	init: function init () {
 		// secondary controller 모델링 설정
-        // var penSphere = document.querySelector("#penSphereSecondary");
-		// this.el.setObject3D('penSphereSecondary', penSphere.object3D);
-
-		this.el.setObject3D('colorpicker', this.data.colorpicker.object3D);
+        var penSphere = document.querySelector("#penSphereSecondary");
+		this.el.setObject3D('penSphereSecondary', penSphere.object3D);
 		
 		this.penSphereSecondaryEnt = penSphereSecondary;
 		this.penSphereSecondaryComp = penSphereSecondary.components.scribubble;
 
-		this.penSphereSecondaryEnt.setAttribute('color', color);
+		this.penSphereSecondaryEnt.setAttribute('color', _drawingColor);
 		this.penSphereSecondaryEnt.setAttribute('radius', lengthList[lineIdx]);
 
 		this.initEventListner();
@@ -231,6 +230,10 @@ AFRAME.registerComponent('secondary-hand',{
 	initEventListner: function initEventListner() {
 		this.el.addEventListener('xbuttondown', e => this.xbuttondown(e));
 		this.el.addEventListener('ybuttondown', e => this.ybuttondown(e));
+		this.data.colorpicker.addEventListener('color_changed', e => {
+			_drawingColor = e.detail.color;
+			this.data.target.setAttribute("material", "color", _drawingColor);
+		});
 	},
 	// 색상 변경
 	xbuttondown:  function xbuttondown(event) {
@@ -239,9 +242,9 @@ AFRAME.registerComponent('secondary-hand',{
 			palleteIdx = 0;
 		}
 
-		color = pallete[palleteIdx];
+		_drawingColor = pallete[palleteIdx];
 		
-		this.penSphereSecondaryEnt.setAttribute('color', color);
+		this.penSphereSecondaryEnt.setAttribute('color', _drawingColor);
 	},
 	// 라인 크기 변경
 	ybuttondown:  function ybuttondown(event) {
@@ -286,17 +289,19 @@ const ScribubbleVR = () => {
 				id="scribubble"
 			></a-entity>
 
-			<a-entity colorpicker="colorWheel: #colorWheel; lightWheel: #lightWheel; target: #target;" id="colorpicker" class="wheels">
-				<a-circle id="colorWheel" position="-1 0.5 -3" rotation="0 0 0"  class="wheels"></a-circle>
-				<a-plane id="lightWheel" position="0.2 0.5 -3" width="0.1" height="2" color="#7BC8A4"  class="wheels"></a-plane>
-			</a-entity>
 
 			<a-box id="target" position="1 0 -3"></a-box>
 
 			<a-entity
-				secondary-hand="penSphereSecondary: #penSphereSecondary"
+				secondary-hand="penSphereSecondary: #penSphereSecondary; colorpicker: #colorpicker; target: #target;"
 				oculus-touch-controls="hand: left; model:false"
-			></a-entity>
+			>
+				<a-entity colorpicker="colorWheel: #colorWheel; lightWheel: #lightWheel;" id="colorpicker" class="wheels">
+					<a-circle id="colorWheel" position="-1 0.5 -3" rotation="0 0 0"  class="wheels"></a-circle>
+					<a-plane id="lightWheel" position="0.2 0.5 -3" width="0.1" height="2" color="#7BC8A4"  class="wheels"></a-plane>
+				</a-entity>
+			</a-entity>
+			
 			<a-entity
 				primary-hand="scribubble: #scribubble;"
 				oculus-touch-controls="hand: right; model:false"
@@ -318,11 +323,10 @@ const ScribubbleVR = () => {
 			{/* <a-entity laser-controls="hand: left;" raycaster="lineColor: red; lineOpacity: 0.5"></a-entity> */}
 			<a-entity laser-controls="hand: right;" raycaster="objects: .wheels; lineColor: blue; lineOpacity: 0.5"></a-entity>
 
-
-			{/* <a-box position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9" shadow="" material="" geometry=""></a-box>
-			<a-sphere position="0 1.25 -5" radius="1.25" color="#EF2D5E" shadow="" material="" geometry=""></a-sphere>
-			<a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D" shadow="" material="" geometry=""></a-cylinder>
-			<a-plane position="0 0 -4" rotation="-90 0 0" width="4" height="4" color="#7BC8A4" shadow="" material="" geometry=""></a-plane> */}
+			{/* <a-box  class="wheels" position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9" shadow="" material="" geometry=""></a-box> */}
+			<a-sphere class="wheels" position="0 1.25 -5" radius="1.25" color="#EF2D5E" shadow="" material="" geometry=""></a-sphere>
+			<a-cylinder class="wheels" position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D" shadow="" material="" geometry=""></a-cylinder>
+			<a-plane class="wheels" position="0 0 -4" rotation="-90 0 0" width="4" height="4" color="#7BC8A4" shadow="" material="" geometry=""></a-plane>
 		</a-scene>
 	);
 };

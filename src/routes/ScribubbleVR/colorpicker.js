@@ -2,12 +2,15 @@
 AFRAME.registerComponent('colorpicker', {
 	schema: {
         colorWheel: { type: 'selector', default: '#colorWheel' },
-		lightWheel: { type: 'selector', default: '#lightWheel' },
-        target: { type: 'selector', default: '#selector' }
+		lightWheel: { type: 'selector', default: '#lightWheel' }
 	},
     init: function() {
-		this.lightness = 0.9
+		this.color = '#FFFFFF';
+		this.lightness = 1;
         
+		this.h = 0;
+		this.s = 0;
+
         this.initWheel();
 
         this.initCursor();
@@ -39,7 +42,6 @@ AFRAME.registerComponent('colorpicker', {
 		};
 		return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 	},
-
     initWheel: function() {
 		this.data.colorWheel.getObject3D('mesh').material = new THREE.ShaderMaterial({
 			uniforms: {
@@ -98,32 +100,30 @@ AFRAME.registerComponent('colorpicker', {
 				uniform vec3 color2;\
 				varying vec2 vUv;\
 				void main() {\
-				gl_FragColor = vec4(mix(color1, color2, vUv.y), 1.0);\
+					gl_FragColor = vec4(mix(color1, color2, vUv.y), 1.0);\
 				}\
 			'
 		});
     },
-
     initCursor: function() {
 	    this.colorCursor = document.createElement('a-entity');
 	    this.lightCursor = document.createElement('a-entity');
 		
 		const cursorGeo = new THREE.TorusBufferGeometry(0.025, 0.005, 2, 18);
-		const cursorMat = new THREE.MeshBasicMaterial({
+		this.cursorMat = new THREE.MeshBasicMaterial({
 			color: '#000',
 			transparent: true
 		});
 
-		this.colorCursor.setObject3D('mesh', new THREE.Mesh(cursorGeo, cursorMat));
-		this.lightCursor.setObject3D('mesh', new THREE.Mesh(cursorGeo, cursorMat));
+		this.colorCursor.setObject3D('mesh', new THREE.Mesh(cursorGeo, this.cursorMat));
+		this.lightCursor.setObject3D('mesh', new THREE.Mesh(cursorGeo, this.cursorMat));
 
 	    this.colorCursor.setAttribute('position', { x: 0, y: 0, z: 0.01 });
-	    this.lightCursor.setAttribute('position', { x: 0, y: 0, z: 0.01 });
+	    this.lightCursor.setAttribute('position', { x: 0, y: 1, z: 0.01 });
 
 		this.data.colorWheel.appendChild(this.colorCursor);
 		this.data.lightWheel.appendChild(this.lightCursor);
     },
-
     initListener: function() {
 		this.data.colorWheel.addEventListener("click", (e)=>{
 			let point = e.detail.intersection.uv
@@ -136,19 +136,17 @@ AFRAME.registerComponent('colorpicker', {
 			};
 
 			var angle = ((polarPosition.theta * (180 / Math.PI)) + 180) % 360;
-			var h, s;
-			h = angle / 360;
-			s = polarPosition.r;
+			this.h = angle / 360;
+			this.s = polarPosition.r;
 
-			var color = this.hslToHex(h, s, this.lightness - s * (0.6 * this.lightness))
-			this.data.target.setAttribute("material", "color", color)
-            // console.log(this.data.target);
+			this.recalculationColor();
 
 			this.colorCursor.setAttribute('position', {
 				x: point.x,
 				y: point.y,
 				z: 0.01
 			});
+
 		});
 
 		this.data.lightWheel.addEventListener("click", (e) => {
@@ -157,11 +155,26 @@ AFRAME.registerComponent('colorpicker', {
 			this.lightness = pointY;
 			this.data.colorWheel.getObject3D('mesh').material.uniforms.brightness.value = this.lightness;
 
+			this.recalculationColor();
+
 			this.lightCursor.setAttribute('position', {
 				x: 0,
 				y: pointY * 2 - 1,
 				z: 0.01
 			});
+
+			if (pointY < 0.6)
+				this.cursorMat.color = new THREE.Color('#FFF');
+			else
+				this.cursorMat.color = new THREE.Color('#000');
 		});
-    }
+    },
+	recalculationColor: function() {
+		this.color = this.hslToHex(this.h, this.s, this.lightness - this.s * (0.6 * this.lightness));
+		this.el.dispatchEvent( new CustomEvent('color_changed', {
+			detail: {
+				color: this.color
+			}
+		}));
+	}
 });
