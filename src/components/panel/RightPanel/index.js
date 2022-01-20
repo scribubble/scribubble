@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'preact/hooks';
-
 import styled from 'styled-components';
+import ContentEditablePage from './contentEditablePage';
 
 const Panel = styled.div`
 	width: 20rem;
@@ -52,7 +52,9 @@ const RightPanel = () => {
 	}
 
 	return (
-		<Panel ref={rightPanel}></Panel>
+		<Panel ref={rightPanel}>
+			<ContentEditablePage />
+		</Panel>
 	);
 };
 
