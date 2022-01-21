@@ -35,14 +35,8 @@ let pallete = [
 	'#0d7a0a'
 ]
 let _drawingColor = pallete[palleteIdx];
-let lineList = [
-	1, 5, 10, 30
-];
-let lengthList = [
-	0.001, 0.005, 0.01, 0.03
-]
-let lineIdx = 0;
-let lineWidth = lineList[lineIdx];
+let _lineWidth = 1;
+let _lineDashed = false;
 
 AFRAME.registerComponent('scribubble', {
 	init: function () {
@@ -56,7 +50,8 @@ AFRAME.registerComponent('scribubble', {
 
 AFRAME.registerComponent('primary-hand',{
 	schema: {
-		scribubble: { type: 'selector', default: '#scribubble' }
+		scribubble: { type: 'selector', default: '#scribubble' },
+		raycaster: { type: 'selector', default: '#raycaster' }
 	},
 
 	init: function init () {
@@ -116,6 +111,7 @@ AFRAME.registerComponent('primary-hand',{
 			createLineAndAdd(data.user_id, {
 				width: data.linewidth,
 				color: data.color,
+				dashed: data.dashed,
 				geo: createLineGeometry(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z))
 			}, this.scribubbleEntity);
 		});
@@ -137,6 +133,7 @@ AFRAME.registerComponent('primary-hand',{
 				createLineAndAdd(testUserId, {
 					width: line.lineWidth,
 					color: line.lineColor,
+					dashed: line.dashed,
 					geo: createLineGeometry(
 						testUserId, 
 						new THREE.Vector3(pos[0].x, pos[0].y, pos[0].z))
@@ -148,14 +145,24 @@ AFRAME.registerComponent('primary-hand',{
 			}
 		});
 
-		// this.el.addEventListener('triggerdown', e => this.triggerdown(e));
-		// this.el.addEventListener('triggerup', e => this.triggerup(e));
-		// this.el.addEventListener('bbuttondown', e => this.bbuttondown(e));
+		this.el.addEventListener('triggerdown', e => this.triggerdown(e));
+		this.el.addEventListener('triggerup', e => this.triggerup(e));
+		this.el.addEventListener('bbuttondown', e => this.bbuttondown(e));
+
+		this.data.raycaster.addEventListener('raycaster-intersection', evt => {
+			this.intersections = evt.detail.els;
+		});
+		this.data.raycaster.addEventListener('raycaster-intersection-cleared', evt => {
+			this.intersections = evt.detail.els;
+		});
 
 		// this.el.addEventListener('thumbstickmoved', e => this.logThumbstick(e));
 	},
 	
 	triggerdown: function triggerdown(event) {
+		if (this.intersections)
+			return;
+		
 		if (!this.isDrawing) {
 			this.isDrawing = true;
 			this.lastPos = this.getLocalPenPos();
@@ -168,8 +175,9 @@ AFRAME.registerComponent('primary-hand',{
 
 			socket.emit('draw start', {
 				user_id: this.user_id,
-				linewidth: lineWidth,
+				linewidth: _lineWidth,
 				color: _drawingColor,
+				dashed: _lineDashed,
 				mousePos: {
 					x: this.lastPos.x,
 					y: this.lastPos.y,
@@ -223,38 +231,29 @@ AFRAME.registerComponent('secondary-hand',{
 		this.penSphereSecondaryComp = penSphereSecondary.components.scribubble;
 
 		this.penSphereSecondaryEnt.setAttribute('color', _drawingColor);
-		this.penSphereSecondaryEnt.setAttribute('radius', lengthList[lineIdx]);
+		this.penSphereSecondaryEnt.setAttribute('radius', _lineWidth);
 
 		this.initEventListner();
 	},
 	initEventListner: function initEventListner() {
 		this.el.addEventListener('xbuttondown', e => this.xbuttondown(e));
 		this.el.addEventListener('ybuttondown', e => this.ybuttondown(e));
+		
 		this.data.colorpicker.addEventListener('color_changed', e => {
 			_drawingColor = e.detail.color;
 			this.data.target.setAttribute("material", "color", _drawingColor);
 		});
-	},
-	// 색상 변경
-	xbuttondown:  function xbuttondown(event) {
-		palleteIdx++;
-		if (palleteIdx >= pallete.length) {
-			palleteIdx = 0;
-		}
-
-		_drawingColor = pallete[palleteIdx];
 		
-		this.penSphereSecondaryEnt.setAttribute('color', _drawingColor);
-	},
-	// 라인 크기 변경
-	ybuttondown:  function ybuttondown(event) {
-		lineIdx++;
-		if (lineIdx >= lineList.length) {
-			lineIdx = 0;
-		}
+		this.data.colorpicker.addEventListener('thickness_changed', e => {
+			_lineWidth = (e.detail.thickness < 0.05) ? 1 : e.detail.thickness * 30;
+		});
 
-		lineWidth = lineList[lineIdx];
-		this.penSphereSecondaryEnt.setAttribute('radius', lengthList[lineIdx]);
+	},
+	xbuttondown:  function xbuttondown(event) {
+		
+	},
+	ybuttondown:  function ybuttondown(event) {
+		
 	}
 });
 
@@ -290,20 +289,21 @@ const ScribubbleVR = () => {
 			></a-entity>
 
 
-			<a-box id="target" position="1 0 -3"></a-box>
+			<a-box id="target" position="3 0 -3"></a-box>
 
 			<a-entity
 				secondary-hand="penSphereSecondary: #penSphereSecondary; colorpicker: #colorpicker; target: #target;"
 				oculus-touch-controls="hand: left; model:false"
 			>
-				<a-entity colorpicker="colorWheel: #colorWheel; lightWheel: #lightWheel;" id="colorpicker" class="wheels">
-					<a-circle id="colorWheel" position="-1 0.5 -3" rotation="0 0 0"  class="wheels"></a-circle>
-					<a-plane id="lightWheel" position="0.2 0.5 -3" width="0.1" height="2" color="#7BC8A4"  class="wheels"></a-plane>
+				<a-entity colorpicker="colorWheel: #colorWheel; lightWheel: #lightWheel; thicknessWheel: #thicknessWheel;" id="colorpicker" class="wheels">
+					<a-circle id="colorWheel" position="0 0 -3" rotation="0 0 0" class="wheels"></a-circle>
+					<a-plane id="lightWheel" position="1.2 0 -3" width="0.1" height="2" class="wheels"></a-plane>
+					<a-triangle id="thicknessWheel" color="#000" position="-1.2 0 -3" vertex-a="-0.1 -1 0" vertex-b="0.1 -1 0" vertex-c="0 1 0" class="wheels"></a-triangle>
 				</a-entity>
 			</a-entity>
 			
 			<a-entity
-				primary-hand="scribubble: #scribubble;"
+				primary-hand="scribubble: #scribubble; raycaster: #raycaster;"
 				oculus-touch-controls="hand: right; model:false"
 			></a-entity>
 
@@ -321,12 +321,12 @@ const ScribubbleVR = () => {
 			></a-sphere>
 
 			{/* <a-entity laser-controls="hand: left;" raycaster="lineColor: red; lineOpacity: 0.5"></a-entity> */}
-			<a-entity laser-controls="hand: right;" raycaster="objects: .wheels; lineColor: blue; lineOpacity: 0.5"></a-entity>
+			<a-entity id="raycaster" laser-controls="hand: right;" raycaster="objects: .wheels; lineColor: blue; lineOpacity: 0.5"></a-entity>
 
 			{/* <a-box  class="wheels" position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9" shadow="" material="" geometry=""></a-box> */}
-			<a-sphere class="wheels" position="0 1.25 -5" radius="1.25" color="#EF2D5E" shadow="" material="" geometry=""></a-sphere>
-			<a-cylinder class="wheels" position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D" shadow="" material="" geometry=""></a-cylinder>
-			<a-plane class="wheels" position="0 0 -4" rotation="-90 0 0" width="4" height="4" color="#7BC8A4" shadow="" material="" geometry=""></a-plane>
+			{/* <a-sphere position="0 1.25 -5" radius="1.25" color="#EF2D5E" shadow="" material="" geometry=""></a-sphere>
+			<a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D" shadow="" material="" geometry=""></a-cylinder>
+			<a-plane position="0 0 -4" rotation="-90 0 0" width="4" height="4" color="#7BC8A4" shadow="" material="" geometry=""></a-plane> */}
 		</a-scene>
 	);
 };

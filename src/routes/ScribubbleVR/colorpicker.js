@@ -2,12 +2,15 @@
 AFRAME.registerComponent('colorpicker', {
 	schema: {
         colorWheel: { type: 'selector', default: '#colorWheel' },
-		lightWheel: { type: 'selector', default: '#lightWheel' }
+		lightWheel: { type: 'selector', default: '#lightWheel' },
+		thicknessWheel: { type: 'selector', default: '#thicknessWheel' }
 	},
     init: function() {
 		this.color = '#FFFFFF';
 		this.lightness = 1;
+		this.thickness = 1;
         
+		// HSL
 		this.h = 0;
 		this.s = 0;
 
@@ -91,8 +94,8 @@ AFRAME.registerComponent('colorpicker', {
 			vertexShader: '\
 				varying vec2 vUv;\
 				void main() {\
-				vUv = uv;\
-				gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);\
+					vUv = uv;\
+					gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);\
 				}\
 			',
 			fragmentShader: '\
@@ -104,10 +107,12 @@ AFRAME.registerComponent('colorpicker', {
 				}\
 			'
 		});
+		this.data.thicknessWheel.getObject3D('mesh').material.color = new THREE.Color("red")
     },
     initCursor: function() {
 	    this.colorCursor = document.createElement('a-entity');
 	    this.lightCursor = document.createElement('a-entity');
+	    this.thickCursor = document.createElement('a-entity');
 		
 		const cursorGeo = new THREE.TorusBufferGeometry(0.025, 0.005, 2, 18);
 		this.cursorMat = new THREE.MeshBasicMaterial({
@@ -117,12 +122,15 @@ AFRAME.registerComponent('colorpicker', {
 
 		this.colorCursor.setObject3D('mesh', new THREE.Mesh(cursorGeo, this.cursorMat));
 		this.lightCursor.setObject3D('mesh', new THREE.Mesh(cursorGeo, this.cursorMat));
+		this.thickCursor.setObject3D('mesh', new THREE.Mesh(cursorGeo, this.cursorMat));
 
 	    this.colorCursor.setAttribute('position', { x: 0, y: 0, z: 0.01 });
 	    this.lightCursor.setAttribute('position', { x: 0, y: 1, z: 0.01 });
+	    this.thickCursor.setAttribute('position', { x: 0, y: 1, z: 0.01 });
 
 		this.data.colorWheel.appendChild(this.colorCursor);
 		this.data.lightWheel.appendChild(this.lightCursor);
+		this.data.thicknessWheel.appendChild(this.thickCursor);
     },
     initListener: function() {
 		this.data.colorWheel.addEventListener("click", (e)=>{
@@ -168,6 +176,22 @@ AFRAME.registerComponent('colorpicker', {
 			else
 				this.cursorMat.color = new THREE.Color('#000');
 		});
+		
+		this.data.thicknessWheel.addEventListener("click", (e) => {
+			let pointY = e.detail.intersection.uv.y;
+
+			this.thickCursor.setAttribute('position', {
+				x: 0,
+				y: pointY * 2 - 1,
+				z: 0.01
+			});
+			
+			this.el.dispatchEvent( new CustomEvent('thickness_changed', {
+				detail: {
+					thickness: Math.abs(pointY - 1)
+				}
+			}));
+		});
     },
 	recalculationColor: function() {
 		this.color = this.hslToHex(this.h, this.s, this.lightness - this.s * (0.6 * this.lightness));
@@ -176,5 +200,6 @@ AFRAME.registerComponent('colorpicker', {
 				color: this.color
 			}
 		}));
+		this.data.thicknessWheel.getObject3D('mesh').material.color = new THREE.Color(this.color);
 	}
 });
