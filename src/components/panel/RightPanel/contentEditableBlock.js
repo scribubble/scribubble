@@ -10,7 +10,7 @@ function ContentEditableBlock(props) {
   });
 
   function onInputHandler(e) {
-    block.content = e.currentTarget.textContent;
+    // block.content = e.currentTarget.textContent;
     // console.log(e.currentTarget.textContent);
   }
 
@@ -24,9 +24,11 @@ function ContentEditableBlock(props) {
     if (e.key === "Enter") {
       if (block.previousKey !== "Shift") {
         e.preventDefault();
+        let param1 = props.id;
+        let param2 = props.index;
         props.addBlock({
-          id: props.id,
-          index: props.index,
+          id: param1,
+          index: param2,
         });
       }
     }
@@ -51,7 +53,7 @@ function ContentEditableBlock(props) {
     <block.tag
       contenteditable="true"
       ref={props.blockRef}
-      onInput={onInputHandler}
+      // onInput={onInputHandler}
       onKeyDown={onKeyDownHandler}
       style="background-color: beige;
           padding: 3px;

@@ -41,15 +41,15 @@ function ContentEditablePage(props) {
   }, [blocks]);
 
   function addBlockHandler(currentBlock) {
-    console.log(currentBlock);
-
     const newBlock = { id: uid(), content: "", tag: "p" };
-    const preBlocks = blocks;
-    const index = preBlocks.map((b) => b.id).indexOf(currentBlock.id);
-    const updatedBlocks = [...preBlocks];
-    updatedBlocks.splice(index + 1, 0, newBlock);
-    setRefFocusIndex(index + 1);
-    setBlocks(updatedBlocks);
+
+    setBlocks(preBlocks => {
+      const index = preBlocks.map((b) => b.id).indexOf(currentBlock.id);
+
+      setRefFocusIndex(index + 1);
+
+      return [...preBlocks, newBlock]
+    });
   }
 
   function updatePageHandler(updatedBlock) {
