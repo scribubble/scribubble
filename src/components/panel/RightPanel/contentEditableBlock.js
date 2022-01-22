@@ -1,12 +1,4 @@
-import { useState, useEffect, useRef } from "preact/hooks";
-import styled from "styled-components";
-
-const Block = styled.div`
-  background-color: beige;
-  padding: 3px;
-  border-radius: 10px;
-  margin-bottom: 3px;
-`;
+import { useState } from "preact/hooks";
 
 function ContentEditableBlock(props) {
   const [block, setBlock] = useState({
@@ -14,19 +6,17 @@ function ContentEditableBlock(props) {
     content: props.content,
     tag: props.tag,
     backup: null,
-    previousKey: ""
+    previousKey: "",
   });
-
-  const blockRef = useRef(null);
 
   function onInputHandler(e) {
     block.content = e.currentTarget.textContent;
-    console.log(block.content);
+    console.log(e.currentTarget.textContent);
   }
 
   function onKeyDownHandler(e) {
     console.log(e.key);
-    
+
     if (e.key === "/") {
       block.backup = block.content;
       console.log(block);
@@ -36,7 +26,7 @@ function ContentEditableBlock(props) {
         e.preventDefault();
         props.addBlock({
           id: props.id,
-          ref: blockRef.current,
+          index: props.index,
         });
       }
     }
@@ -52,14 +42,18 @@ function ContentEditableBlock(props) {
   }
 
   return (
-    <Block>
-      <block.tag
-        ref={blockRef}
-        contenteditable="true"
-        onInput={onInputHandler}
-        onKeyDown={onKeyDownHandler}
-      >{block.content}</block.tag>
-    </Block>
+    <block.tag
+      contenteditable="true"
+      ref={props.blockRef}
+      onInput={onInputHandler}
+      onKeyDown={onKeyDownHandler}
+      style="background-color: beige;
+          padding: 3px;
+          border-radius: 10px;
+          margin-bottom: 3px;"
+    >
+      {block.content}
+    </block.tag>
   );
 }
 

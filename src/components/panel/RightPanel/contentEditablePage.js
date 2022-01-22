@@ -1,4 +1,4 @@
-import { useState, useEffect } from "preact/hooks";
+import { useState, useEffect, useRef } from "preact/hooks";
 import styled from "styled-components";
 import ContentEditableBlock from "./contentEditableBlock";
 
@@ -16,33 +16,41 @@ const initialBlock = [
   { id: uid(), content: "Jot anything down", tag: "p" },
 ];
 
-const setCaretToEnd = (element) => {
-  const range = document.createRange();
-  const selection = window.getSelection();
-  range.selectNodeContents(element);
-  range.collapse(false);
-  selection.removeAllRanges();
-  selection.addRange(range);
-  element.focus();
-};
+// const setCaretToEnd = (element) => {
+//   const range = document.createRange();
+//   const selection = window.getSelection();
+//   range.selectNodeContents(element);
+//   range.collapse(false);
+//   selection.removeAllRanges();
+//   selection.addRange(range);
+//   element.focus();
+// };
 
 function ContentEditablePage(props) {
   const [blocks, setBlocks] = useState(initialBlock);
 
+  const blocksRef = useRef([]);
+  const [refFocusIndex, setRefFocusIndex] = useState(0);
+
+  function handleFocus(index) {
+    blocksRef.current[index]?.focus();
+  }
+
+  useEffect(() => {
+    handleFocus(refFocusIndex);
+    console.log(refFocusIndex);
+  }, [blocks]);
+
   function addBlockHandler(currentBlock) {
     console.log(currentBlock);
-    
+
     const newBlock = { id: uid(), content: "", tag: "p" };
     const preBlocks = blocks;
     const index = preBlocks.map((b) => b.id).indexOf(currentBlock.id);
     const updatedBlocks = [...preBlocks];
     updatedBlocks.splice(index + 1, 0, newBlock);
-    // blocks = updatedBlocks;
-    setBlocks(updatedBlocks, () => {
-      console.log(currentBlock.ref);
-      // currentBlock.ref.nextElementSibling.focus();
-    });
-    console.log(currentBlock.ref);
+    setRefFocusIndex(index + 1);
+    setBlocks(updatedBlocks);
   }
 
   function updatePageHandler(updatedBlock) {
@@ -80,12 +88,14 @@ function ContentEditablePage(props) {
             id={block.id}
             content={block.content}
             tag={block.tag}
+            blockRef={(el) => blocksRef.current.push(el)}
+            index={key}
             addBlock={addBlockHandler}
             // updatePage={() => updatePageHandler(block)}
             // deleteBlock={() => deleteBlockHandler(block)}
           />
         );
-      })}<p>as</p>
+      })}
     </Page>
   );
 }
