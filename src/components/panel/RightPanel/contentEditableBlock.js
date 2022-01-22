@@ -11,7 +11,7 @@ function ContentEditableBlock(props) {
 
   function onInputHandler(e) {
     block.content = e.currentTarget.textContent;
-    console.log(e.currentTarget.textContent);
+    // console.log(e.currentTarget.textContent);
   }
 
   function onKeyDownHandler(e) {
@@ -29,6 +29,12 @@ function ContentEditableBlock(props) {
           index: props.index,
         });
       }
+    }
+    if (e.key === "ArrowDown") {
+      props.moveFocus(props.index + 1);
+    }
+    if (e.key === "ArrowUp") {
+      props.moveFocus(props.index - 1);
     }
     // if (e.key === "Backspace" && !block.content) {
     //   e.preventDefault();

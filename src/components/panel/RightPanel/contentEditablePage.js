@@ -90,6 +90,7 @@ function ContentEditablePage(props) {
             blockRef={(el) => blocksRef.current[key] = el}
             index={key}
             addBlock={addBlockHandler}
+            moveFocus={handleFocus}
             // updatePage={() => updatePageHandler(block)}
             // deleteBlock={() => deleteBlockHandler(block)}
           />
