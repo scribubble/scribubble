@@ -38,7 +38,6 @@ function ContentEditablePage(props) {
 
   useEffect(() => {
     handleFocus(refFocusIndex);
-    console.log(refFocusIndex);
   }, [blocks]);
 
   function addBlockHandler(currentBlock) {
@@ -88,7 +87,7 @@ function ContentEditablePage(props) {
             id={block.id}
             content={block.content}
             tag={block.tag}
-            blockRef={(el) => blocksRef.current.push(el)}
+            blockRef={(el) => blocksRef.current[key] = el}
             index={key}
             addBlock={addBlockHandler}
             // updatePage={() => updatePageHandler(block)}
