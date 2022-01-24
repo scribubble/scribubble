@@ -1,4 +1,4 @@
-import { useEffect } from 'preact/hooks';
+import { useEffect, useState, useRef } from 'preact/hooks';
 
 import { createLineGeometry, addPosition, createLineAndAdd, removeLastLine } from '../../util/drawLine';
 
@@ -37,6 +37,43 @@ let pallete = [
 let _drawingColor = pallete[palleteIdx];
 let _lineWidth = 1;
 let _lineDashed = false;
+
+const AddPalleteBT = ({ posY, clicked, buttonColor="white", fontColor="black" }) => {
+	const button = useRef();
+
+	useEffect(() => {
+		button.current.addEventListener('click', clicked);
+		return () => {
+			button.current.removeEventListener('click', clicked);
+		}
+	}, []);
+
+	return (
+		<a-plane ref={button} position={`1.5 ${posY} 0.1`} width="0.5" height="0.5" class="wheels" color={buttonColor}>
+			<a-text value="ADD" color={fontColor} align="center"></a-text>
+		</a-plane>
+	);
+}
+const Pallete = ({ posY, color, clicked, removed }) => {
+	const pallete = useRef();
+	const removeButtton = useRef();
+
+	useEffect(() => {
+		pallete.current.addEventListener('click', clicked);
+		removeButtton.current.addEventListener('click', removed);
+		return () => {
+			pallete.current.removeEventListener('click', clicked);
+			removeButtton.current.removeEventListener('click', removed);
+		}
+	}, [color]);
+
+	return (
+		<>
+			<a-plane ref={pallete} position={`1.5 ${posY} 0.1`} width="0.5" height="0.5" class="wheels" color={color}></a-plane>
+			<a-plane ref={removeButtton} position={`1.875 ${posY} 0.1`} width="0.25" height="0.25" class="wheels" color="#FF00FF"></a-plane>
+		</>
+	);
+}
 
 AFRAME.registerComponent('scribubble', {
 	init: function () {
@@ -217,36 +254,14 @@ AFRAME.registerComponent('primary-hand',{
 
 AFRAME.registerComponent('secondary-hand',{
 	schema: {
-		penSphereSecondary: { type: 'selector', default: '#penSphereSecondary' },
-		colorpicker: { type: 'selector', default: '#colorpicker' },
-		target: { type: 'selector', default: '#target' }
 	},
 
 	init: function init () {
-		// secondary controller 모델링 설정
-        var penSphere = document.querySelector("#penSphereSecondary");
-		this.el.setObject3D('penSphereSecondary', penSphere.object3D);
-		
-		this.penSphereSecondaryEnt = penSphereSecondary;
-		this.penSphereSecondaryComp = penSphereSecondary.components.scribubble;
-
-		this.penSphereSecondaryEnt.setAttribute('color', _drawingColor);
-		this.penSphereSecondaryEnt.setAttribute('radius', _lineWidth);
-
 		this.initEventListner();
 	},
 	initEventListner: function initEventListner() {
 		this.el.addEventListener('xbuttondown', e => this.xbuttondown(e));
 		this.el.addEventListener('ybuttondown', e => this.ybuttondown(e));
-		
-		this.data.colorpicker.addEventListener('color_changed', e => {
-			_drawingColor = e.detail.color;
-			this.data.target.setAttribute("material", "color", _drawingColor);
-		});
-		
-		this.data.colorpicker.addEventListener('thickness_changed', e => {
-			_lineWidth = (e.detail.thickness < 0.05) ? 1 : e.detail.thickness * 30;
-		});
 
 	},
 	xbuttondown:  function xbuttondown(event) {
@@ -259,9 +274,31 @@ AFRAME.registerComponent('secondary-hand',{
 
 
 const ScribubbleVR = () => {
+	const colorpicker = useRef();
+	const target = useRef();
+
+	const [pallete, setPallete] = useState([
+		{
+			color: "#000",
+			lightness: 0,
+			point: { x : 0, y : 0 }
+		},
+	]);	
+
+	function colorChanged(color) {
+		_drawingColor = color;
+		target.current.setAttribute("material", "color", _drawingColor);
+	}
 
 	useEffect(() => {
-    
+		colorpicker.current.addEventListener('color_changed', e => {
+			colorChanged(e.detail.color);
+		});
+		colorpicker.current.addEventListener('thickness_changed', e => {
+			_lineWidth = (e.detail.thickness < 0.05) ? 1 : e.detail.thickness * 30;
+			console.log(_lineWidth);
+		});
+
         return () => {
             socket.off('user_id');
             socket.off('draw start');
@@ -272,10 +309,14 @@ const ScribubbleVR = () => {
         };
 	}, []);
 
+	function selectPallete(palleteData) {
+		colorChanged(palleteData.color);
+		colorpicker.current.components.colorpicker.setData(palleteData.color, palleteData.point, palleteData.lightness);
+	}
 
 	return (
-		<a-scene id="scene" cursor="rayOrigin: mouse">
-			<a-sky color="#fff"></a-sky>
+		<a-scene id="scene" cursor="rayOrigin: mouse" antialias="true">
+			<a-sky color="#FFF"></a-sky>
 
 			<a-camera 
 				id="camera" 
@@ -289,17 +330,52 @@ const ScribubbleVR = () => {
 			></a-entity>
 
 
-			<a-box id="target" position="3 0 -3"></a-box>
+			<a-box ref={target} id="target" position="3 0 -3"></a-box>
 
 			<a-entity
-				secondary-hand="penSphereSecondary: #penSphereSecondary; colorpicker: #colorpicker; target: #target;"
+				secondary-hand
 				oculus-touch-controls="hand: left; model:false"
 			>
-				<a-entity colorpicker="colorWheel: #colorWheel; lightWheel: #lightWheel; thicknessWheel: #thicknessWheel;" id="colorpicker" class="wheels">
-					<a-circle id="colorWheel" position="0 0 -3" rotation="0 0 0" class="wheels"></a-circle>
-					<a-plane id="lightWheel" position="1.2 0 -3" width="0.1" height="2" class="wheels"></a-plane>
-					<a-triangle id="thicknessWheel" color="#000" position="-1.2 0 -3" vertex-a="-0.1 -1 0" vertex-b="0.1 -1 0" vertex-c="0 1 0" class="wheels"></a-triangle>
-				</a-entity>
+				<a-circle ref={colorpicker} colorpicker="colorWheel: #colorWheel; lightWheel: #lightWheel; thicknessWheel: #thicknessWheel;" id="colorpicker" color="#a8a8a8" radius="2" opacity="1" scale="0.1 0.1 0.1">
+					<a-circle id="colorWheel" position="0 0 0.1" rotation="0 0 0" class="wheels"></a-circle>
+					{/* <a-plane id="lightWheel" position="1.2 0 -3" width="0.1" height="2" class="wheels"></a-plane> */}
+					<a-plane id="lightWheel" position="0 -1.1 0.1" width="2" height="0.15" class="wheels"></a-plane>
+					{/* <a-triangle id="thicknessWheel" color="#000" position="-1.2 0 -3" vertex-a="-0.1 -1 0" vertex-b="0.1 -1 0" vertex-c="0 1 0" class="wheels"></a-triangle> */}
+					<a-triangle id="thicknessWheel" color="#000" position="0 1.1 0.1" vertex-a="-1 0 0" vertex-b="1 -0.1 0" vertex-c="1 0.1 0"></a-triangle>
+					<a-plane id="thicknessWheelCol" position="0 1.1 0.11" material="side: double; color: #FFF; transparent: true; opacity: 0"  width="2" height="0.2" class="wheels"></a-plane>
+					
+					<AddPalleteBT
+						posY={0.75 + 0.6}
+						buttonColor={"red"}
+						clicked={() => {
+							setPallete(prev => [...prev, colorpicker.current.components.colorpicker.getData() ])
+						}}
+					>
+					</AddPalleteBT>
+					{
+						pallete.map((e, idx) => {
+							return (
+								<Pallete
+									posY={0.75 - 0.6 * idx}
+									color={e.color}
+									clicked={() => {
+										console.log(e.color);
+										selectPallete(e)
+									}}
+									removed={() => {
+										// setPallete(prev => [...prev.slice(0, idx), ...prev.slice(idx + 1, prev.length - 1)] )
+										setPallete(prev => {
+											// const temp = [...prev];
+											prev.splice(idx, 1);
+											console.log(prev);
+											return [...prev];
+										});
+									}
+								}></Pallete>
+							)
+						})
+					}
+				</a-circle>
 			</a-entity>
 			
 			<a-entity
@@ -313,17 +389,11 @@ const ScribubbleVR = () => {
 				radius="0.001" 
 				material="opacity: 1"
 			></a-sphere>
-			<a-sphere
-				id="penSphereSecondary"
-				color="red" 
-				radius="0.01" 
-				material="opacity: 0.7"
-			></a-sphere>
 
 			{/* <a-entity laser-controls="hand: left;" raycaster="lineColor: red; lineOpacity: 0.5"></a-entity> */}
 			<a-entity id="raycaster" laser-controls="hand: right;" raycaster="objects: .wheels; lineColor: blue; lineOpacity: 0.5"></a-entity>
 
-			{/* <a-box  class="wheels" position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9" shadow="" material="" geometry=""></a-box> */}
+			{/* <a-box position="-1 0.5 1" rotation="0 45 0" color="#4CC3D9" shadow="" material="" geometry=""></a-box> */}
 			{/* <a-sphere position="0 1.25 -5" radius="1.25" color="#EF2D5E" shadow="" material="" geometry=""></a-sphere>
 			<a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D" shadow="" material="" geometry=""></a-cylinder>
 			<a-plane position="0 0 -4" rotation="-90 0 0" width="4" height="4" color="#7BC8A4" shadow="" material="" geometry=""></a-plane> */}

@@ -3,13 +3,15 @@ AFRAME.registerComponent('colorpicker', {
 	schema: {
         colorWheel: { type: 'selector', default: '#colorWheel' },
 		lightWheel: { type: 'selector', default: '#lightWheel' },
-		thicknessWheel: { type: 'selector', default: '#thicknessWheel' }
+		thicknessWheel: { type: 'selector', default: '#thicknessWheel' },
+		thicknessWheelCol: { type: 'selector', default: '#thicknessWheelCol' }
 	},
     init: function() {
 		this.color = '#FFFFFF';
 		this.lightness = 1;
 		this.thickness = 1;
-        
+        this.point = { x: 0, y: 0 };
+
 		// HSL
 		this.h = 0;
 		this.s = 0;
@@ -103,7 +105,7 @@ AFRAME.registerComponent('colorpicker', {
 				uniform vec3 color2;\
 				varying vec2 vUv;\
 				void main() {\
-					gl_FragColor = vec4(mix(color1, color2, vUv.y), 1.0);\
+					gl_FragColor = vec4(mix(color1, color2, vUv.x), 1.0);\
 				}\
 			'
 		});
@@ -125,8 +127,8 @@ AFRAME.registerComponent('colorpicker', {
 		this.thickCursor.setObject3D('mesh', new THREE.Mesh(cursorGeo, this.cursorMat));
 
 	    this.colorCursor.setAttribute('position', { x: 0, y: 0, z: 0.01 });
-	    this.lightCursor.setAttribute('position', { x: 0, y: 1, z: 0.01 });
-	    this.thickCursor.setAttribute('position', { x: 0, y: 1, z: 0.01 });
+	    this.lightCursor.setAttribute('position', { x: 1, y: 0, z: 0.01 });
+	    this.thickCursor.setAttribute('position', { x: -1, y: 0, z: 0.01 });
 
 		this.data.colorWheel.appendChild(this.colorCursor);
 		this.data.lightWheel.appendChild(this.lightCursor);
@@ -147,48 +149,32 @@ AFRAME.registerComponent('colorpicker', {
 			this.h = angle / 360;
 			this.s = polarPosition.r;
 
-			this.recalculationColor();
+			this.setColorCursorPos(point);
 
-			this.colorCursor.setAttribute('position', {
-				x: point.x,
-				y: point.y,
-				z: 0.01
-			});
+			this.recalculationColor();
 
 		});
 
 		this.data.lightWheel.addEventListener("click", (e) => {
-			let pointY = e.detail.intersection.uv.y;
+			let pointX = e.detail.intersection.uv.x;
 			
-			this.lightness = pointY;
-			this.data.colorWheel.getObject3D('mesh').material.uniforms.brightness.value = this.lightness;
+			this.setLightCursorPos(pointX);
 
 			this.recalculationColor();
-
-			this.lightCursor.setAttribute('position', {
-				x: 0,
-				y: pointY * 2 - 1,
-				z: 0.01
-			});
-
-			if (pointY < 0.6)
-				this.cursorMat.color = new THREE.Color('#FFF');
-			else
-				this.cursorMat.color = new THREE.Color('#000');
 		});
 		
-		this.data.thicknessWheel.addEventListener("click", (e) => {
-			let pointY = e.detail.intersection.uv.y;
+		this.data.thicknessWheelCol.addEventListener("click", (e) => {
+			let pointX = e.detail.intersection.uv.x;
 
 			this.thickCursor.setAttribute('position', {
-				x: 0,
-				y: pointY * 2 - 1,
+				x: pointX * 2 - 1,
+				y: 0,
 				z: 0.01
 			});
 			
 			this.el.dispatchEvent( new CustomEvent('thickness_changed', {
 				detail: {
-					thickness: Math.abs(pointY - 1)
+					thickness: pointX
 				}
 			}));
 		});
@@ -201,5 +187,45 @@ AFRAME.registerComponent('colorpicker', {
 			}
 		}));
 		this.data.thicknessWheel.getObject3D('mesh').material.color = new THREE.Color(this.color);
+	},
+	setLightCursorPos: function(lightness) {
+		this.lightness = lightness;
+
+		this.lightCursor.setAttribute('position', {
+			x: lightness * 2 - 1,
+			y: 0,
+			z: 0.01
+		});
+
+		if (lightness < 0.6)
+			this.cursorMat.color = new THREE.Color('#FFF');
+		else
+			this.cursorMat.color = new THREE.Color('#000');
+			
+		this.data.colorWheel.getObject3D('mesh').material.uniforms.brightness.value = this.lightness;
+	},
+	setColorCursorPos: function(point) {
+		this.point = point;
+
+	    this.colorCursor.setAttribute('position', {
+			x: point.x,
+			y: point.y,
+			z: 0.01
+		});
+	},
+	setData: function(color, point, lightness) {
+		this.color = color;
+		this.data.thicknessWheel.getObject3D('mesh').material.color = new THREE.Color(this.color);
+
+		this.setColorCursorPos(point);
+
+		this.setLightCursorPos(lightness);
+	},
+	getData: function() {
+		return {
+			color: this.color,
+			lightness: this.lightness,
+			point: this.point
+		}
 	}
 });
