@@ -24,11 +24,8 @@ function ContentEditableBlock(props) {
     if (e.key === "Enter") {
       if (block.previousKey !== "Shift") {
         e.preventDefault();
-        let param1 = props.id;
-        let param2 = props.index;
         props.addBlock({
-          id: param1,
-          index: param2,
+          id: props.id,
         });
       }
     }
@@ -38,13 +35,13 @@ function ContentEditableBlock(props) {
     if (e.key === "ArrowUp") {
       props.moveFocus(props.index - 1);
     }
-    // if (e.key === "Backspace" && !block.content) {
-    //   e.preventDefault();
-    //   props.deleteBlock({
-    //     id: props.id,
-    //     ref: blockRef.current,
-    //   });
-    // }
+
+    if (e.key === "Backspace" && !block.content) {
+      e.preventDefault();
+      props.deleteBlock({
+        id: props.id,
+      });
+    }
 
     block.previousKey = e.key;
   }

@@ -34,6 +34,7 @@ function ContentEditablePage(props) {
 
   function handleFocus(index) {
     blocksRef.current[index]?.focus();
+    console.log("currentFocus: " + index);
   }
 
   useEffect(() => {
@@ -65,17 +66,17 @@ function ContentEditablePage(props) {
   }
 
   function deleteBlockHandler(currentBlock) {
-    const previousBlock = currentBlock.ref.previousElementSibling;
-    if (previousBlock) {
-      const preBlocks = blocks;
+
+    setBlocks(preBlocks => {
       const index = preBlocks.map((b) => b.id).indexOf(currentBlock.id);
-      const updatedBlocks = [...preBlocks];
-      updatedBlocks.splice(index, 1);
-      setBlocks(updatedBlocks, () => {
-        setCaretToEnd(previousBlock);
-        previousBlock.focus();
-      });
-    }
+      
+      const updatedBlock = [...preBlocks];
+      updatedBlock.splice(index, 1);
+
+      setRefFocusIndex(index - 1);
+
+      return [...updatedBlock]
+    });
   }
 
   return (
@@ -92,7 +93,7 @@ function ContentEditablePage(props) {
             addBlock={addBlockHandler}
             moveFocus={handleFocus}
             // updatePage={() => updatePageHandler(block)}
-            // deleteBlock={() => deleteBlockHandler(block)}
+            deleteBlock={() => deleteBlockHandler(block)}
           />
         );
       })}
