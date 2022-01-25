@@ -9,13 +9,15 @@ function ContentEditableBlock(props) {
     previousKey: "",
   });
 
-  function onInputHandler(e) {
-    // block.content = e.currentTarget.textContent;
-    // console.log(e.currentTarget.textContent);
+  function onChangeHandler(e) {
+    // setBlock(preState => {
+    //   return { ...preState, content: e.target.value};
+    // });
+    block.content = e.currentRef.textContent;
   }
 
   function onKeyDownHandler(e) {
-    console.log(e.key);
+    // console.log(e.key);
 
     if (e.key === "/") {
       block.backup = block.content;
@@ -48,9 +50,10 @@ function ContentEditableBlock(props) {
 
   return (
     <block.tag
-      contenteditable="true"
+      contentEditable="true"
       ref={props.blockRef}
       // onInput={onInputHandler}
+      onChange={onChangeHandler}
       onKeyDown={onKeyDownHandler}
       style="background-color: beige;
           padding: 3px;

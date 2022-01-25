@@ -39,6 +39,7 @@ function ContentEditablePage(props) {
 
   useEffect(() => {
     handleFocus(refFocusIndex);
+    console.log(blocks);
   }, [blocks]);
 
   function addBlockHandler(currentBlock) {
@@ -46,10 +47,10 @@ function ContentEditablePage(props) {
 
     setBlocks(preBlocks => {
       const index = preBlocks.map((b) => b.id).indexOf(currentBlock.id);
-
+      const updatedBlock = [...preBlocks];
+      updatedBlock.splice(index + 1, 0, newBlock);
       setRefFocusIndex(index + 1);
-
-      return [...preBlocks, newBlock]
+      return updatedBlock;
     });
   }
 
@@ -92,7 +93,7 @@ function ContentEditablePage(props) {
             index={key}
             addBlock={addBlockHandler}
             moveFocus={handleFocus}
-            // updatePage={() => updatePageHandler(block)}
+            updatePage={() => updatePageHandler(block)}
             deleteBlock={() => deleteBlockHandler(block)}
           />
         );
