@@ -86,8 +86,10 @@ class Scribubble extends Component {
 
 		this.controls = new OrbitControls(this.camera, this.renderer.domElement);
 		
-		this.light = new THREE.AmbientLight(0x404040);
-		this.scene.add(this.light);
+		this.scene.add( new THREE.AmbientLight( 0x555555 ));
+		const light = new THREE.SpotLight( 0xffffff, 1.5 );
+		light.position.set( 0, 500, 2000 );
+		this.scene.add( light );
 
 		document.addEventListener('mousewheel', (e) => {
 			console.log(this.controls.getDistance());
@@ -490,7 +492,7 @@ class Scribubble extends Component {
 	 * @param {String} shape 생성할 도형 이름
 	 */
 	createShape = (shape) => {
-		const material = new THREE.MeshLambertMaterial( { color: this.state.drawingColor } );
+		const material = new THREE.MeshPhongMaterial( { color: this.state.drawingColor, shininess: 0 } );
 		let geometry, shapeObj;
 
 		if (shape === 'SQUARE') {
