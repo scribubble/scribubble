@@ -86,9 +86,9 @@ class Scribubble extends Component {
 
 		this.controls = new OrbitControls(this.camera, this.renderer.domElement);
 		
-		this.scene.add( new THREE.AmbientLight( 0x555555 ));
-		const light = new THREE.SpotLight( 0xffffff, 1.5 );
-		light.position.set( 0, 500, 2000 );
+		this.scene.add( new THREE.AmbientLight( 0x404040 ));
+		const light = new THREE.PointLight( 0xffffff, 1.5 );
+		light.position.set( 0, 500, 3000 );
 		this.scene.add( light );
 
 		document.addEventListener('mousewheel', (e) => {
@@ -123,7 +123,7 @@ class Scribubble extends Component {
 		});
 		
 		const geometry = new THREE.BoxGeometry( 1, 1, 1 );
-		const material = new THREE.MeshBasicMaterial( {color: 0x4CC3D9} );
+		const material = new THREE.MeshPhongMaterial( {color: 0x4CC3D9} );
 		const cube = new THREE.Mesh( geometry, material );
 		cube.position.x = -1;
 		cube.position.y = 0.5;
