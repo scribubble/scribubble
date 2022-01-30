@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from 'preact/hooks';
 import { createLineGeometry, addPosition, createLineAndAdd, removeLastLine } from '../../util/drawLine';
 
 import './colorpicker.js';
+import './plane.js';
 
 import io from 'socket.io-client';
 // const server_host = ":4000";
@@ -38,7 +39,7 @@ let _drawingColor = pallete[palleteIdx];
 let _lineWidth = 1;
 let _lineDashed = false;
 
-const AddPalleteBT = ({ posY, clicked, buttonColor="white", fontColor="black" }) => {
+const AddPalleteBT = ({ posY, clicked, buttonColor="white", fontColor="#4262FF" }) => {
 	const button = useRef();
 
 	useEffect(() => {
@@ -49,12 +50,12 @@ const AddPalleteBT = ({ posY, clicked, buttonColor="white", fontColor="black" })
 	}, []);
 
 	return (
-		<a-plane ref={button} position={`1.5 ${posY} 0.1`} width="0.5" height="0.5" class="wheels" color={buttonColor}>
-			<a-text value="ADD" color={fontColor} align="center"></a-text>
+		<a-plane border-plane="scale:1.1;" material="opacity: 0.0; transparent: true" ref={button} position={`1.5 ${posY} 0.1`} width="0.5" height="0.3" class="wheels" color={buttonColor}>
+			<a-text value="ADD" color={fontColor} align="center" scale='0.5 0.5 1'></a-text>
 		</a-plane>
 	);
 }
-const Pallete = ({ posY, color, clicked, removed }) => {
+const Pallete = ({ posY, color, clicked, removed, removeButttonColor="#FF7EE3" }) => {
 	const pallete = useRef();
 	const removeButtton = useRef();
 
@@ -70,7 +71,9 @@ const Pallete = ({ posY, color, clicked, removed }) => {
 	return (
 		<>
 			<a-plane ref={pallete} position={`1.5 ${posY} 0.1`} width="0.5" height="0.5" class="wheels" color={color}></a-plane>
-			<a-plane ref={removeButtton} position={`1.875 ${posY} 0.1`} width="0.25" height="0.25" class="wheels" color="#FF00FF"></a-plane>
+			<a-plane ref={removeButtton} position={`1.875 ${posY} 0.1`} width="0.25" height="0.25" class="wheels" color={removeButttonColor}>
+				<a-text value="X" color="white" align="center"></a-text>
+			</a-plane>
 		</>
 	);
 }
