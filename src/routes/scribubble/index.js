@@ -204,7 +204,7 @@ class Scribubble extends Component {
         });
 
 		socket.on('draw start', (data) => {
-			console.log("on print", data.mousePos);
+			console.log("on print", data.dashed);
 			createLineAndAdd(data.user_id, {
 				width: data.linewidth,
 				color: data.color,
@@ -238,19 +238,18 @@ class Scribubble extends Component {
 		});
 
 		socket.on('get saved bubble', (data) => {
-			console.log(data);
-
-			console.log(data.line.length);
+			// console.log(data);
+			// console.log(data.line.length);
 
 			for(let i = 0; i < data.line.length; i++) {
 				let line = data.line[i];
-				console.log(';', line);
+				// console.log(';', line);
 				let pos = line.linePositions;
 
 				createLineAndAdd(line.drawer_id, {
 					width: line.lineWidth,
 					color: line.lineColor,
-					dashed: line.dashed,
+					dashed: line.lineDashed,
 					geo: createLineGeometry(
 						line.drawer_id, 
 						new THREE.Vector3(pos[0].x, pos[0].y, pos[0].z))
