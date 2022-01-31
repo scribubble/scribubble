@@ -167,6 +167,9 @@ class Scribubble extends Component {
 		// 유저 고유 id
 		this.user_id = 'aaa';
 
+		// 참여한 버블 이름
+		this.bubbleName = 'room1';
+
 		// 접속해 있는 유저들의 id와 Tag저장됨
 		this.nameTag = {};
 
@@ -201,6 +204,7 @@ class Scribubble extends Component {
         });
 
 		socket.on('draw start', (data) => {
+			console.log("on print", data.mousePos);
 			createLineAndAdd(data.user_id, {
 				width: data.linewidth,
 				color: data.color,
@@ -242,19 +246,18 @@ class Scribubble extends Component {
 				let line = data.line[i];
 				console.log(';', line);
 				let pos = line.linePositions;
-				let testUserId = data.userid[0]; // 데이터 구조에 오류가 있어서, 라인 작성자를 임시로 설정
 
-				createLineAndAdd(testUserId, {
+				createLineAndAdd(line.drawer_id, {
 					width: line.lineWidth,
 					color: line.lineColor,
 					dashed: line.dashed,
 					geo: createLineGeometry(
-						testUserId, 
+						line.drawer_id, 
 						new THREE.Vector3(pos[0].x, pos[0].y, pos[0].z))
 				}, this.scene);
 				
 				for(let j = 1; j < pos.length; j++) {
-					addPosition(testUserId, new THREE.Vector3(pos[j].x, pos[j].y, pos[j].z));
+					addPosition(line.drawer_id, new THREE.Vector3(pos[j].x, pos[j].y, pos[j].z));
 				}
 			}
 		});
@@ -298,8 +301,9 @@ class Scribubble extends Component {
 		// 	color: params.color,
 		// 	geo: createLineGeometry(user_id, mousePos)
 		// }, scene);
-
+		console.log("print", this.mousePos);
 		socket.emit('draw start', {
+			bubbleName: this.bubbleName,
 			user_id: this.user_id,
 			linewidth: this.state.linewidth,
 			color: this.state.drawingColor,
@@ -327,6 +331,12 @@ class Scribubble extends Component {
 		this.objEntity.add(obj);
 
 		// this.transformControls.attach(obj);
+
+		console.log('draw stop');
+		socket.emit('draw stop', {
+			bubbleName: this.bubbleName,
+			user_id: this.user_id
+		});
 	}
 
 	/**
@@ -378,8 +388,6 @@ class Scribubble extends Component {
 			this.transformControls.setMode('rotate');
 		} else if (this.keysPressed['e']) {
 			this.transformControls.setMode('scale');
-		} else if(this.keysPressed['s']) {
-			socket.emit('save bubble', {userid: this.user_id});
 		}
 	}
 	keyUp = (event) => {
