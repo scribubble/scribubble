@@ -118,7 +118,7 @@ class Scribubble extends Component {
 		});
 
 		this.transformControls.addEventListener('change', (e) => {
-			console.log(this.targetObj);
+			// console.log(this.targetObj);
 			socket.emit('move obj', { 
 				bubbleName: this.bubbleName,
 				objName: this.targetObj.name, 
@@ -277,7 +277,7 @@ class Scribubble extends Component {
 		});
 
 		socket.on("create shape", (data) => {
-			this.createShape(data.shape);
+			this.createShape(data.shape, {objName: data.objName, position: data.position});
 		});
 
 		socket.on('move obj', (data) => {
@@ -529,7 +529,7 @@ class Scribubble extends Component {
 	 * 화면 중앙에 도형 생성
 	 * @param {String} shape 생성할 도형 이름
 	 */
-	createShape = (shape) => {
+	createShape = (shape, extraData) => {
 		const material = new THREE.MeshBasicMaterial( { color: this.state.drawingColor } );
 		let geometry, shapeObj;
 
@@ -545,8 +545,31 @@ class Scribubble extends Component {
 		}
 
 		shapeObj = new THREE.Mesh(geometry, material);
-		shapeObj.position.copy(getCenterPosition(this.camera, this.scene.position, this.raycaster));
-		this.objEntity.add( shapeObj );
+
+		if(extraData === null) {
+			shapeObj.position.copy(getCenterPosition(this.camera, this.scene.position, this.raycaster));
+
+			let newObjName = this.user_id + this.objIdx;
+			this.objIdx++;
+			
+			shapeObj.name = newObjName;
+			this.objEntity.add( shapeObj );
+
+			socket.emit('create shape', {
+				bubbleName: this.bubbleName,
+				shape: shape, 
+				objName: newObjName, 
+				position: {
+					x: shapeObj.position.x,
+					y: shapeObj.position.y,
+					z: shapeObj.position.z
+				}
+			});
+		} else {
+			shapeObj.position.set(extraData.position.x, extraData.position.y, extraData.position.z);
+			shapeObj.name = extraData.objName;
+			this.objEntity.add( shapeObj );
+		}
 
 	}
 
@@ -656,10 +679,10 @@ class Scribubble extends Component {
 				{
 					this.state.mode === MODE.SHAPE &&
 					<ColBar>
-						<SquareButton onClick={e => { this.createShape('SQUARE'); }}></SquareButton>
-						<SphereButton onClick={e => { this.createShape('SPHERE') }}></SphereButton>
-						<CylinderButton onClick={e => { this.createShape('CYLINDER') }}></CylinderButton>
-						<PlaneButton onClick={e => { this.createShape('PLANE') }}></PlaneButton>
+						<SquareButton onClick={e => { this.createShape('SQUARE', null) }}></SquareButton>
+						<SphereButton onClick={e => { this.createShape('SPHERE', null) }}></SphereButton>
+						<CylinderButton onClick={e => { this.createShape('CYLINDER', null) }}></CylinderButton>
+						<PlaneButton onClick={e => { this.createShape('PLANE', null) }}></PlaneButton>
 					</ColBar>
 				}
 			</div>
