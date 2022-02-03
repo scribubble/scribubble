@@ -119,7 +119,11 @@ class Scribubble extends Component {
 
 		this.transformControls.addEventListener('change', (e) => {
 			console.log(this.targetObj);
-			socket.emit('move obj', { objName: this.targetObj.name, position: this.targetObj.position });
+			socket.emit('move obj', { 
+				bubbleName: this.bubbleName,
+				objName: this.targetObj.name, 
+				position: this.targetObj.position 
+			});
 		});
 		
 		const geometry = new THREE.BoxGeometry( 1, 1, 1 );
@@ -238,10 +242,6 @@ class Scribubble extends Component {
         socket.on('drawing', (data) => {
 			addPosition(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z));
         });
-
-		socket.on('move line', (data) => {
-			
-		});
 		
 		socket.on('remove current', (data) => {
 			removeLastLine(data.user_id, this.scene);
@@ -282,7 +282,7 @@ class Scribubble extends Component {
 
 		socket.on('move obj', (data) => {
 			const  target = this.objEntity.getObjectByName(data.objName);
-			console.log(target.position);
+			// console.log(target.position);
 			target.position.set(data.position.x, data.position.y, data.position.z ); 
 		});
 	}
