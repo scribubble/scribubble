@@ -113,8 +113,13 @@ class Scribubble extends Component {
 		this.scene.add(this.transformControls);
 		
 		this.transformControls.addEventListener('dragging-changed', (e) => {
-			if (this.state.mode === MODE.SELECTING)
+			if (this.state.mode === MODE.SELECTING) 
 			this.controls.enabled = !e.value;
+		});
+
+		this.transformControls.addEventListener('change', (e) => {
+			console.log(this.targetObj);
+			socket.emit('move obj', { objName: this.targetObj.name, position: this.targetObj.position });
 		});
 		
 		const geometry = new THREE.BoxGeometry( 1, 1, 1 );
@@ -126,6 +131,7 @@ class Scribubble extends Component {
 		cube.rotation.x = 0;
 		cube.rotation.y = 45;
 		cube.rotation.z = 0;
+		cube.name = '12345';
 		this.objEntity.add( cube );
 		const geometry2 = new THREE.SphereGeometry( 1.25, 36, 18 );
 		const material2 = new THREE.MeshBasicMaterial( { color: 0xEF2D5E } );
@@ -273,6 +279,12 @@ class Scribubble extends Component {
 		socket.on("create shape", (data) => {
 			this.createShape(data.shape);
 		});
+
+		socket.on('move obj', (data) => {
+			const  target = this.objEntity.getObjectByName(data.objName);
+			console.log(target.position);
+			target.position.set(data.position.x, data.position.y, data.position.z ); 
+		});
 	}
 
 	removeSocketListener = () => {
@@ -315,7 +327,7 @@ class Scribubble extends Component {
 		// 	color: params.color,
 		// 	geo: createLineGeometry(user_id, mousePos)
 		// }, scene);
-		
+
 		socket.emit('draw start', {
 			bubbleName: this.bubbleName,
 			user_id: this.user_id,
@@ -430,7 +442,7 @@ class Scribubble extends Component {
 		if (!this.transformControls.dragging && this.sphereInter.visible) {
 			this.targetObj = this.selectingObj;
 			this.transformControls.attach(
-				this.targetObj.type === 'Line2' ?
+				this.targetObj === 'Line2' ?
 					this.targetObj.parent:
 					this.targetObj
 			);
@@ -536,12 +548,6 @@ class Scribubble extends Component {
 		shapeObj.position.copy(getCenterPosition(this.camera, this.scene.position, this.raycaster));
 		this.objEntity.add( shapeObj );
 
-		console.log("create shape");
-		socket.emit("create shape", {
-			bubbleName: this.bubbleName,
-			user_id: socket.id, 
-			shape: shape
-		});
 	}
 
 	zoomControl = (diff) => {
@@ -650,7 +656,7 @@ class Scribubble extends Component {
 				{
 					this.state.mode === MODE.SHAPE &&
 					<ColBar>
-						<SquareButton onClick={e => { this.createShape('SQUARE') }}></SquareButton>
+						<SquareButton onClick={e => { this.createShape('SQUARE'); }}></SquareButton>
 						<SphereButton onClick={e => { this.createShape('SPHERE') }}></SphereButton>
 						<CylinderButton onClick={e => { this.createShape('CYLINDER') }}></CylinderButton>
 						<PlaneButton onClick={e => { this.createShape('PLANE') }}></PlaneButton>
