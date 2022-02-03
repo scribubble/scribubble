@@ -175,6 +175,10 @@ class Scribubble extends Component {
 
 		// 타겟팅 중인 오브젝트
 		this.targetObj = null;
+
+		// 다음에 생성할 오브젝트의 인덱스
+		this.objIdx = 0;
+		// console.log(this.objIdx);
 		
 		const animate = () => {
 			this.renderer.render(this.scene, this.camera);
@@ -196,7 +200,7 @@ class Scribubble extends Component {
 
 	initSocketListener() {
 		// 버블에 저장된 데이터 요청
-		const currentBubble = 'room1';
+		const currentBubble = 'room1'; // 임시
 		socket.emit('enter bubble', currentBubble);
 
         socket.on('user_id', (data) => {
@@ -204,12 +208,12 @@ class Scribubble extends Component {
         });
 
 		socket.on('draw start', (data) => {
-			console.log("on print", data.dashed);
 			createLineAndAdd(data.user_id, {
 				width: data.linewidth,
 				color: data.color,
 				dashed: data.dashed,
-				geo: createLineGeometry(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z))
+				geo: createLineGeometry(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z)),
+				name: data.name,
 			}, this.objEntity);
 				
 			if (!this.nameTag[data.user_id]) {
@@ -252,13 +256,22 @@ class Scribubble extends Component {
 					dashed: line.lineDashed,
 					geo: createLineGeometry(
 						line.drawer_id, 
-						new THREE.Vector3(pos[0].x, pos[0].y, pos[0].z))
-				}, this.scene);
+						new THREE.Vector3(pos[0].x, pos[0].y, pos[0].z)),
+					name: line.name
+				}, this.objEntity);
 				
 				for(let j = 1; j < pos.length; j++) {
 					addPosition(line.drawer_id, new THREE.Vector3(pos[j].x, pos[j].y, pos[j].z));
 				}
 			}
+		});
+
+		socket.on("remove line", (data) => {
+			this.objEntity.remove(this.objEntity.getObjectByName(data.name));
+		});
+
+		socket.on("create shape", (data) => {
+			this.createShape(data.shape);
 		});
 	}
 
@@ -277,6 +290,8 @@ class Scribubble extends Component {
 		socket.off('move line');
 		socket.off('remove current');
 		socket.off('get saved bubble');
+		socket.off('remove line');
+		socket.off('create shape');
 		socket.close();
 	}
 
@@ -300,19 +315,22 @@ class Scribubble extends Component {
 		// 	color: params.color,
 		// 	geo: createLineGeometry(user_id, mousePos)
 		// }, scene);
-		console.log("print", this.mousePos);
+		
 		socket.emit('draw start', {
 			bubbleName: this.bubbleName,
 			user_id: this.user_id,
 			linewidth: this.state.linewidth,
 			color: this.state.drawingColor,
 			dashed: this.state.lineDashed,
+			name: this.user_id + this.objIdx,
 			mousePos: {
 				x: this.mousePos.x,
 				y: this.mousePos.y,
 				z: this.mousePos.z,
 			}
 		});
+
+		this.objIdx++;
 	}
 
 	drawEnd = () => {
@@ -347,10 +365,16 @@ class Scribubble extends Component {
 
 		this.transformControls.detach();
 		
-		if (this.targetObj.type === 'Line2')
+		if (this.targetObj.type === 'Line2') {
 			this.objEntity.remove(this.targetObj.parent);
+			socket.emit("remove line", {
+				bubbleName: this.bubbleName, 
+				name: this.targetObj.name
+			});
+		}
 		this.objEntity.remove(this.targetObj);
 
+		
 		this.targetObj = null;
 	}
 
@@ -511,6 +535,13 @@ class Scribubble extends Component {
 		shapeObj = new THREE.Mesh(geometry, material);
 		shapeObj.position.copy(getCenterPosition(this.camera, this.scene.position, this.raycaster));
 		this.objEntity.add( shapeObj );
+
+		console.log("create shape");
+		socket.emit("create shape", {
+			bubbleName: this.bubbleName,
+			user_id: socket.id, 
+			shape: shape
+		});
 	}
 
 	zoomControl = (diff) => {
