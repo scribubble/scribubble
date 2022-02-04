@@ -59,7 +59,8 @@ export const createLine = (opt) => {
 		linewidth: opt.width,
 		dashSize: 0.1,
 		gapSize: 0.1,
-		dashed: opt.dashed
+		dashed: opt.dashed,
+        name: opt.name
 	});
 
     if (window)
@@ -67,6 +68,7 @@ export const createLine = (opt) => {
  
     var line = new Line2(opt.geo, matLine);
     line.computeLineDistances();
+    line.name = opt.name;
 
     return line; 
 };
