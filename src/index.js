@@ -1,6 +1,6 @@
-import "./style";
-import App from "./components/app";
+import './style';
+import App from './components/app';
 
-import "aframe";
+import 'aframe'
 
 export default App;
