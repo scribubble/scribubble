@@ -59,7 +59,8 @@ export const createLine = (opt) => {
 		linewidth: opt.width,
 		dashSize: 0.1,
 		gapSize: 0.1,
-		dashed: opt.dashed
+		dashed: opt.dashed,
+        name: opt.name
 	});
 
     if (window)

@@ -118,11 +118,15 @@ class Scribubble extends Component {
 		});
 
 		this.transformControls.addEventListener('change', (e) => {
-			// console.log(this.targetObj);
+			// console.log(this.targetObj.position);
 			socket.emit('move obj', { 
 				bubbleName: this.bubbleName,
 				objName: this.targetObj.name, 
-				position: this.targetObj.position 
+				position: {
+					x: this.targetObj.position.x,
+					y: this.targetObj.position.y,
+					z: this.targetObj.position.z,
+				}
 			});
 		});
 		
@@ -263,17 +267,23 @@ class Scribubble extends Component {
 					geo: createLineGeometry(
 						line.drawer_id, 
 						new THREE.Vector3(pos[0].x, pos[0].y, pos[0].z)),
-					name: line.name
+					name: line.name,
 				}, this.objEntity);
 				
 				for(let j = 1; j < pos.length; j++) {
 					addPosition(line.drawer_id, new THREE.Vector3(pos[j].x, pos[j].y, pos[j].z));
 				}
 			}
+
+			for(let i = 0; i < data.shape.length; i++) {
+				let item = data.shape[i];
+				this.createShape(item.shape, {objName: item.objName, position: item.position});
+			}
 		});
 
-		socket.on("remove line", (data) => {
-			this.objEntity.remove(this.objEntity.getObjectByName(data.name));
+		socket.on("delete obj", (data) => {
+			let obj = this.objEntity.getObjectByName(data.objName)
+			this.objEntity.remove(obj);
 		});
 
 		socket.on("create shape", (data) => {
@@ -281,9 +291,9 @@ class Scribubble extends Component {
 		});
 
 		socket.on('move obj', (data) => {
-			const  target = this.objEntity.getObjectByName(data.objName);
-			// console.log(target.position);
-			target.position.set(data.position.x, data.position.y, data.position.z ); 
+			const target = this.objEntity.getObjectByName(data.objName);
+			// console.log(data);
+			target.position.set(data.position.x, data.position.y, data.position.z); 
 		});
 	}
 
@@ -379,13 +389,13 @@ class Scribubble extends Component {
 		
 		if (this.targetObj.type === 'Line2') {
 			this.objEntity.remove(this.targetObj.parent);
-			socket.emit("remove line", {
-				bubbleName: this.bubbleName, 
-				name: this.targetObj.name
-			});
 		}
 		this.objEntity.remove(this.targetObj);
 
+		socket.emit("delete obj", {
+			bubbleName: this.bubbleName, 
+			objName: this.targetObj.name
+		});
 		
 		this.targetObj = null;
 	}
@@ -528,6 +538,7 @@ class Scribubble extends Component {
 	/**
 	 * 화면 중앙에 도형 생성
 	 * @param {String} shape 생성할 도형 이름
+	 * @param {Obejct} shape 생성할 도형 이름
 	 */
 	createShape = (shape, extraData) => {
 		const material = new THREE.MeshBasicMaterial( { color: this.state.drawingColor } );
