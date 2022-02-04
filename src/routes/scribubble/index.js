@@ -1,28 +1,44 @@
-import { h, render, Component } from 'preact';
-import { useEffect, useState, useCallback } from 'preact/hooks';
+import { h, render, Component } from "preact";
+import { useEffect, useState, useCallback } from "preact/hooks";
 
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
-import TextSprite from '@seregpie/three.text-sprite';
+import { TransformControls } from "three/examples/jsm/controls/TransformControls";
+import TextSprite from "@seregpie/three.text-sprite";
 
-import { createLineGeometry, addPosition, createLineAndAdd, removeLastLine, getLastLine, getCenterPos } from '../../util/drawLine';
-import { refreshMousePosition, getCenterPosition } from '../../util/position';
-
-import RightPanel from '../../components/panel/RightPanel';
 import {
-	TextButton,
-	ExploreToolButton, SelectToolButton, EraseToolButton, DrawingToolButton, ShapeToolButton,
-	AddPalleteButton, PalleteButton,
-	PlaneButton, SquareButton, SphereButton, CylinderButton,
-	DashedButton,
-	PlusButton, MinusButton
-} from '../../components/Button';
-import { ColorPicker, LengthInput, ZoomInput } from '../../components/Input';
-import { ColBar, DivisionLine, RowBottomBar } from '../../components/Bar';
+  createLineGeometry,
+  addPosition,
+  createLineAndAdd,
+  removeLastLine,
+  getLastLine,
+  getCenterPos,
+} from "../../util/drawLine";
+import { refreshMousePosition, getCenterPosition } from "../../util/position";
 
-import io, { connect } from 'socket.io-client';
+import RightPanel from "../../components/panel/RightPanel";
+import {
+  TextButton,
+  ExploreToolButton,
+  SelectToolButton,
+  EraseToolButton,
+  DrawingToolButton,
+  ShapeToolButton,
+  AddPalleteButton,
+  PalleteButton,
+  PlaneButton,
+  SquareButton,
+  SphereButton,
+  CylinderButton,
+  DashedButton,
+  PlusButton,
+  MinusButton,
+} from "../../components/Button";
+import { ColorPicker, LengthInput, ZoomInput } from "../../components/Input";
+import { ColBar, DivisionLine, RowBottomBar } from "../../components/Bar";
 
-import style from './style.css'
+import io, { connect } from "socket.io-client";
+
+import style from "./style.css";
 
 const server_host = ":4000";
 // https 로 테스트할때
@@ -39,11 +55,11 @@ const socket = io(server_host, {});
 // });
 
 const MODE = {
-	EXPLORING: 'EXPLORING',
-    SELECTING: 'SELECTING',
-    DRAWING: 'DRAWING',
-	ERASEING: 'ERASING',
-	SHAPE: 'SHAPE'
+  EXPLORING: "EXPLORING",
+  SELECTING: "SELECTING",
+  DRAWING: "DRAWING",
+  ERASEING: "ERASING",
+  SHAPE: "SHAPE",
 };
 
 class Scribubble extends Component {
@@ -99,7 +115,7 @@ class Scribubble extends Component {
 		this.controls.addEventListener('change', (e) => {
 			console.log('AA', this.camera.position.z);
 		})
-
+		
 		this.controls.maxDistance = 10;
 
 		// 다른 오브젝트들의 부모가 될 상위 오브젝트 (line 및 도형 등 선택이 가능한 오브젝트들의 부모)
@@ -118,8 +134,21 @@ class Scribubble extends Component {
 		this.scene.add(this.transformControls);
 		
 		this.transformControls.addEventListener('dragging-changed', (e) => {
-			if (this.state.mode === MODE.SELECTING)
+			if (this.state.mode === MODE.SELECTING) 
 			this.controls.enabled = !e.value;
+		});
+
+		this.transformControls.addEventListener('change', (e) => {
+			// console.log(this.targetObj.position);
+			socket.emit('move obj', { 
+				bubbleName: this.bubbleName,
+				objName: this.targetObj.name, 
+				position: {
+					x: this.targetObj.position.x,
+					y: this.targetObj.position.y,
+					z: this.targetObj.position.z,
+				}
+			});
 		});
 		
 		const geometry = new THREE.BoxGeometry( 1, 1, 1 );
@@ -131,6 +160,7 @@ class Scribubble extends Component {
 		cube.rotation.x = 0;
 		cube.rotation.y = 45;
 		cube.rotation.z = 0;
+		cube.name = '12345';
 		this.objEntity.add( cube );
 		const geometry2 = new THREE.SphereGeometry( 1.25, 36, 18 );
 		const material2 = new THREE.MeshBasicMaterial( { color: 0xEF2D5E } );
@@ -172,11 +202,18 @@ class Scribubble extends Component {
 		// 유저 고유 id
 		this.user_id = 'aaa';
 
+		// 참여한 버블 이름
+		this.bubbleName = 'room1';
+
 		// 접속해 있는 유저들의 id와 Tag저장됨
 		this.nameTag = {};
 
 		// 타겟팅 중인 오브젝트
 		this.targetObj = null;
+
+		// 다음에 생성할 오브젝트의 인덱스
+		this.objIdx = 0;
+		// console.log(this.objIdx);
 		
 		const animate = () => {
 			this.renderer.render(this.scene, this.camera);
@@ -198,29 +235,41 @@ class Scribubble extends Component {
 
 	initSocketListener() {
 		// 버블에 저장된 데이터 요청
-		const currentBubble = 'room1';
+		const currentBubble = 'room1'; // 임시
 		socket.emit('enter bubble', currentBubble);
 
-        socket.on('user_id', (data) => {
+    socket.on('user_id', (data) => {
 			this.user_id = data.user_id;
-        });
-
+    });
+ 
 		socket.on('draw start', (data) => {
 			createLineAndAdd(data.user_id, {
 				width: data.linewidth,
 				color: data.color,
 				dashed: data.dashed,
-				geo: createLineGeometry(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z))
+				geo: createLineGeometry(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z)),
+				name: data.name,
 			}, this.objEntity);
 				
 			if (!this.nameTag[data.user_id]) {
-				this.nameTag[data.user_id] = new TextSprite({
+				const nametagText = new TextSprite({
 					text: data.user_id,
 					fontFamily: 'Arial, Helvetica, sans-serif',
 					fontSize: 1,
-					color: '#ffbbff',
-				});	
+					color: '#4262FF',
+				});
+				
+				const nametagBG = new THREE.Sprite( new THREE.SpriteMaterial({ color: '#E7ECF6' }) );
+				nametagText.add( nametagBG );
+
+				const nametag = new THREE.Object3D();
+				nametag.add(nametagText);
+				nametag.scale.set(0.02, 0.02, 0.02);
+				this.nameTag[data.user_id] = nametag;
+
 				this.scene.add(this.nameTag[data.user_id]);
+
+				console.log(sprite);
 			}
 			this.nameTag[data.user_id].position.copy(data.mousePos);
 
@@ -229,39 +278,54 @@ class Scribubble extends Component {
         socket.on('drawing', (data) => {
 			addPosition(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z));
         });
-
-		socket.on('move line', (data) => {
-			
-		});
 		
 		socket.on('remove current', (data) => {
 			removeLastLine(data.user_id, this.scene);
 		});
 
 		socket.on('get saved bubble', (data) => {
-			console.log(data);
-
-			console.log(data.line.length);
+			// console.log(data);
+			// console.log(data.line.length);
 
 			for(let i = 0; i < data.line.length; i++) {
 				let line = data.line[i];
-				console.log(';', line);
+				// console.log(';', line);
 				let pos = line.linePositions;
-				let testUserId = data.userid[0]; // 데이터 구조에 오류가 있어서, 라인 작성자를 임시로 설정
 
-				createLineAndAdd(testUserId, {
+				createLineAndAdd(line.drawer_id, {
 					width: line.lineWidth,
 					color: line.lineColor,
-					dashed: line.dashed,
+					dashed: line.lineDashed,
 					geo: createLineGeometry(
-						testUserId, 
-						new THREE.Vector3(pos[0].x, pos[0].y, pos[0].z))
-				}, this.scene);
+						line.drawer_id, 
+						new THREE.Vector3(pos[0].x, pos[0].y, pos[0].z)),
+					name: line.name,
+				}, this.objEntity);
 				
 				for(let j = 1; j < pos.length; j++) {
-					addPosition(testUserId, new THREE.Vector3(pos[j].x, pos[j].y, pos[j].z));
+					addPosition(line.drawer_id, new THREE.Vector3(pos[j].x, pos[j].y, pos[j].z));
 				}
 			}
+
+			for(let i = 0; i < data.shape.length; i++) {
+				let item = data.shape[i];
+				this.createShape(item.shape, {objName: item.objName, position: item.position});
+			}
+		});
+
+		socket.on("delete obj", (data) => {
+			let obj = this.objEntity.getObjectByName(data.objName)
+			this.objEntity.remove(obj);
+		});
+
+		socket.on("create shape", (data) => {
+			this.createShape(data.shape, {objName: data.objName, position: data.position});
+		});
+
+		socket.on('move obj', (data) => {
+			const target = this.objEntity.getObjectByName(data.objName);
+			// console.log(data);
+			target.position.set(data.position.x, data.position.y, data.position.z); 
 		});
 	}
 
@@ -280,6 +344,8 @@ class Scribubble extends Component {
 		socket.off('move line');
 		socket.off('remove current');
 		socket.off('get saved bubble');
+		socket.off('remove line');
+		socket.off('create shape');
 		socket.close();
 	}
 
@@ -305,16 +371,20 @@ class Scribubble extends Component {
 		// }, scene);
 
 		socket.emit('draw start', {
+			bubbleName: this.bubbleName,
 			user_id: this.user_id,
 			linewidth: this.state.linewidth,
 			color: this.state.drawingColor,
 			dashed: this.state.lineDashed,
+			name: this.user_id + this.objIdx,
 			mousePos: {
 				x: this.mousePos.x,
 				y: this.mousePos.y,
 				z: this.mousePos.z,
 			}
 		});
+
+		this.objIdx++;
 	}
 
 	drawEnd = () => {
@@ -332,6 +402,12 @@ class Scribubble extends Component {
 		this.objEntity.add(obj);
 
 		// this.transformControls.attach(obj);
+
+		console.log('draw stop');
+		socket.emit('draw stop', {
+			bubbleName: this.bubbleName,
+			user_id: this.user_id
+		});
 	}
 
 	/**
@@ -343,10 +419,16 @@ class Scribubble extends Component {
 
 		this.transformControls.detach();
 		
-		if (this.targetObj.type === 'Line2')
+		if (this.targetObj.type === 'Line2') {
 			this.objEntity.remove(this.targetObj.parent);
+		}
 		this.objEntity.remove(this.targetObj);
 
+		socket.emit("delete obj", {
+			bubbleName: this.bubbleName, 
+			objName: this.targetObj.name
+		});
+		
 		this.targetObj = null;
 	}
 
@@ -383,8 +465,6 @@ class Scribubble extends Component {
 			this.transformControls.setMode('rotate');
 		} else if (this.keysPressed['e']) {
 			this.transformControls.setMode('scale');
-		} else if(this.keysPressed['s']) {
-			socket.emit('save bubble', {userid: this.user_id});
 		}
 	}
 	keyUp = (event) => {
@@ -404,7 +484,7 @@ class Scribubble extends Component {
 		if (!this.transformControls.dragging && this.sphereInter.visible) {
 			this.targetObj = this.selectingObj;
 			this.transformControls.attach(
-				this.targetObj.type === 'Line2' ?
+				this.targetObj === 'Line2' ?
 					this.targetObj.parent:
 					this.targetObj
 			);
@@ -490,9 +570,12 @@ class Scribubble extends Component {
 	/**
 	 * 화면 중앙에 도형 생성
 	 * @param {String} shape 생성할 도형 이름
+	 * @param {Obejct} shape 생성할 도형 이름
 	 */
+
 	createShape = (shape) => {
 		const material = new THREE.MeshPhongMaterial( { color: this.state.drawingColor, shininess: 0 } );
+		
 		let geometry, shapeObj;
 
 		if (shape === 'SQUARE') {
@@ -507,8 +590,32 @@ class Scribubble extends Component {
 		}
 
 		shapeObj = new THREE.Mesh(geometry, material);
-		shapeObj.position.copy(getCenterPosition(this.camera, this.scene.position, this.raycaster));
-		this.objEntity.add( shapeObj );
+
+		if(extraData === null) {
+			shapeObj.position.copy(getCenterPosition(this.camera, this.scene.position, this.raycaster));
+
+			let newObjName = this.user_id + this.objIdx;
+			this.objIdx++;
+			
+			shapeObj.name = newObjName;
+			this.objEntity.add( shapeObj );
+
+			socket.emit('create shape', {
+				bubbleName: this.bubbleName,
+				shape: shape, 
+				objName: newObjName, 
+				position: {
+					x: shapeObj.position.x,
+					y: shapeObj.position.y,
+					z: shapeObj.position.z
+				}
+			});
+		} else {
+			shapeObj.position.set(extraData.position.x, extraData.position.y, extraData.position.z);
+			shapeObj.name = extraData.objName;
+			this.objEntity.add( shapeObj );
+		}
+
 	}
 
 	zoomControl = (diff) => {
@@ -617,10 +724,10 @@ class Scribubble extends Component {
 				{
 					this.state.mode === MODE.SHAPE &&
 					<ColBar>
-						<SquareButton onClick={e => { this.createShape('SQUARE') }}></SquareButton>
-						<SphereButton onClick={e => { this.createShape('SPHERE') }}></SphereButton>
-						<CylinderButton onClick={e => { this.createShape('CYLINDER') }}></CylinderButton>
-						<PlaneButton onClick={e => { this.createShape('PLANE') }}></PlaneButton>
+						<SquareButton onClick={e => { this.createShape('SQUARE', null) }}></SquareButton>
+						<SphereButton onClick={e => { this.createShape('SPHERE', null) }}></SphereButton>
+						<CylinderButton onClick={e => { this.createShape('CYLINDER', null) }}></CylinderButton>
+						<PlaneButton onClick={e => { this.createShape('PLANE', null) }}></PlaneButton>
 					</ColBar>
 				}
 			</div>

@@ -1,22 +1,24 @@
-import { useEffect } from 'preact/hooks';
+import { useEffect, useState, useRef } from 'preact/hooks';
 
 import { createLineGeometry, addPosition, createLineAndAdd, removeLastLine } from '../../util/drawLine';
 
+import './colorpicker.js';
+import './plane.js';
 
 import io from 'socket.io-client';
-const server_host = ":4000";
+// const server_host = ":4000";
 // https 로 테스트할때
-// const server_host = "https:// :4000";
+const server_host = "https://175.123.65.79:4000";
 
-const socket = io(server_host, {});
+// const socket = io(server_host, {});
 // https 로 테스트할때
-// const socket = io(server_host, {
-// 	// secure:true,
-// 	withCredentials: true,
-// 	extraHeaders: {
-// 	  "my-custom-header": "abcd"
-// 	}
-// });
+const socket = io(server_host, {
+	// secure:true,
+	withCredentials: true,
+	extraHeaders: {
+	  "my-custom-header": "abcd"
+	}
+});
 
 let palleteIdx = 0;
 let pallete = [
@@ -33,28 +35,63 @@ let pallete = [
 	'#0a9106',
 	'#0d7a0a'
 ]
-let color = pallete[palleteIdx];
-let lineList = [
-	1, 5, 10, 30
-];
-let lengthList = [
-	0.001, 0.005, 0.01, 0.03
-]
-let lineIdx = 0;
-let lineWidth = lineList[lineIdx];
+let _drawingColor = pallete[palleteIdx];
+let _lineWidth = 1;
+let _lineDashed = false;
+
+const AddPalleteBT = ({ posY, clicked, buttonColor="white", fontColor="#4262FF" }) => {
+	const button = useRef();
+
+	useEffect(() => {
+		button.current.addEventListener('click', clicked);
+		return () => {
+			button.current.removeEventListener('click', clicked);
+		}
+	}, []);
+
+	return (
+		<a-plane border-plane="scale:1.1;" material="opacity: 0.0; transparent: true" ref={button} position={`1.5 ${posY} 0.1`} width="0.5" height="0.3" class="wheels" color={buttonColor}>
+			<a-text value="ADD" color={fontColor} align="center" scale='0.5 0.5 1'></a-text>
+		</a-plane>
+	);
+}
+const Pallete = ({ posY, color, clicked, removed, removeButttonColor="#FF7EE3" }) => {
+	const pallete = useRef();
+	const removeButtton = useRef();
+
+	useEffect(() => {
+		pallete.current.addEventListener('click', clicked);
+		removeButtton.current.addEventListener('click', removed);
+		return () => {
+			pallete.current.removeEventListener('click', clicked);
+			removeButtton.current.removeEventListener('click', removed);
+		}
+	}, [color]);
+
+	return (
+		<>
+			<a-plane ref={pallete} position={`1.5 ${posY} 0.1`} width="0.5" height="0.5" class="wheels" color={color}></a-plane>
+			<a-plane ref={removeButtton} position={`1.875 ${posY} 0.1`} width="0.25" height="0.25" class="wheels" color={removeButttonColor}>
+				<a-text value="X" color="white" align="center"></a-text>
+			</a-plane>
+		</>
+	);
+}
 
 AFRAME.registerComponent('scribubble', {
 	init: function () {
 		this.initListener();
+		this.ASSSS = 10000;
 	},
 
 	initListener: function() {
 	}
 });
-  
+
 AFRAME.registerComponent('primary-hand',{
 	schema: {
-		scribubble: { type: 'selector', default: '#scribubble' }
+		scribubble: { type: 'selector', default: '#scribubble' },
+		raycaster: { type: 'selector', default: '#raycaster' }
 	},
 
 	init: function init () {
@@ -68,8 +105,8 @@ AFRAME.registerComponent('primary-hand',{
 
 		this.distThresh = 0.001;
 
-		this.scribubbleEnt = scribubble;
-		this.scribubbleComp = scribubble.components.scribubble;
+		this.scribubbleEntity = scribubble.object3D;
+		this.scribubbleComponent = scribubble.components.scribubble;
 
 		// primary controller 모델링 설정
         var penSphere = document.querySelector("#penSpherePrimary");
@@ -114,8 +151,9 @@ AFRAME.registerComponent('primary-hand',{
 			createLineAndAdd(data.user_id, {
 				width: data.linewidth,
 				color: data.color,
+				dashed: data.dashed,
 				geo: createLineGeometry(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z))
-			}, this.scribubbleEnt.object3D);
+			}, this.scribubbleEntity);
 		});
 
         socket.on('drawing', (data) => {
@@ -123,7 +161,7 @@ AFRAME.registerComponent('primary-hand',{
         });
 
 		socket.on('remove current', (data) => {
-			removeLastLine(data.user_id, this.scribubbleEnt.object3D);
+			removeLastLine(data.user_id, this.scribubbleEntity);
 		});
 
 		socket.on('get saved bubble', (data) => {
@@ -135,10 +173,11 @@ AFRAME.registerComponent('primary-hand',{
 				createLineAndAdd(testUserId, {
 					width: line.lineWidth,
 					color: line.lineColor,
+					dashed: line.dashed,
 					geo: createLineGeometry(
 						testUserId, 
 						new THREE.Vector3(pos[0].x, pos[0].y, pos[0].z))
-				}, this.scribubbleEnt.object3D);
+				}, this.scribubbleEntity);
 				
 				for(let j = 1; j < pos.length; j++) {
 					addPosition(testUserId, new THREE.Vector3(pos[j].x, pos[j].y, pos[j].z));
@@ -149,10 +188,21 @@ AFRAME.registerComponent('primary-hand',{
 		this.el.addEventListener('triggerdown', e => this.triggerdown(e));
 		this.el.addEventListener('triggerup', e => this.triggerup(e));
 		this.el.addEventListener('bbuttondown', e => this.bbuttondown(e));
+
+		this.data.raycaster.addEventListener('raycaster-intersection', evt => {
+			this.intersections = evt.detail.els;
+		});
+		this.data.raycaster.addEventListener('raycaster-intersection-cleared', evt => {
+			this.intersections = evt.detail.els;
+		});
+
 		// this.el.addEventListener('thumbstickmoved', e => this.logThumbstick(e));
 	},
 	
 	triggerdown: function triggerdown(event) {
+		if (this.intersections)
+			return;
+		
 		if (!this.isDrawing) {
 			this.isDrawing = true;
 			this.lastPos = this.getLocalPenPos();
@@ -161,12 +211,13 @@ AFRAME.registerComponent('primary-hand',{
 			// 	width: 1,
 			// 	color: new THREE.Color(0, 1, 1),
 			// 	geo: createLineGeometry(data.user_id, this.lastPos)
-			// }, this.scribubbleEnt.object3D);
+			// }, this.scribubbleEntity);
 
 			socket.emit('draw start', {
 				user_id: this.user_id,
-				linewidth: lineWidth,
-				color: color,
+				linewidth: _lineWidth,
+				color: _drawingColor,
+				dashed: _lineDashed,
 				mousePos: {
 					x: this.lastPos.x,
 					y: this.lastPos.y,
@@ -191,7 +242,7 @@ AFRAME.registerComponent('primary-hand',{
 
 		this.pen.localToWorld(pos);
 
-		this.scribubbleEnt.object3D.worldToLocal(pos);
+		this.scribubbleEntity.worldToLocal(pos);
 
 		return pos;
 	},
@@ -206,53 +257,51 @@ AFRAME.registerComponent('primary-hand',{
 
 AFRAME.registerComponent('secondary-hand',{
 	schema: {
-		penSphereSecondary: { type: 'selector', default: '#penSphereSecondary' }
 	},
 
 	init: function init () {
-		// secondary controller 모델링 설정
-        var penSphere = document.querySelector("#penSphereSecondary");
-		this.el.setObject3D('penSphereSecondary', penSphere.object3D);
-		
-		this.penSphereSecondaryEnt = penSphereSecondary;
-		this.penSphereSecondaryComp = penSphereSecondary.components.scribubble;
-
-		this.penSphereSecondaryEnt.setAttribute('color', color);
-		this.penSphereSecondaryEnt.setAttribute('radius', lengthList[lineIdx]);
-
 		this.initEventListner();
 	},
 	initEventListner: function initEventListner() {
 		this.el.addEventListener('xbuttondown', e => this.xbuttondown(e));
 		this.el.addEventListener('ybuttondown', e => this.ybuttondown(e));
+
 	},
-	// 색상 변경
 	xbuttondown:  function xbuttondown(event) {
-		palleteIdx++;
-		if (palleteIdx >= pallete.length) {
-			palleteIdx = 0;
-		}
-
-		color = pallete[palleteIdx];
 		
-		this.penSphereSecondaryEnt.setAttribute('color', color);
 	},
-	// 라인 크기 변경
 	ybuttondown:  function ybuttondown(event) {
-		lineIdx++;
-		if (lineIdx >= lineList.length) {
-			lineIdx = 0;
-		}
-
-		lineWidth = lineList[lineIdx];
-		this.penSphereSecondaryEnt.setAttribute('radius', lengthList[lineIdx]);
+		
 	}
 });
 
+
 const ScribubbleVR = () => {
+	const colorpicker = useRef();
+	const target = useRef();
+
+	const [pallete, setPallete] = useState([
+		{
+			color: "#000",
+			lightness: 0,
+			point: { x : 0, y : 0 }
+		},
+	]);	
+
+	function colorChanged(color) {
+		_drawingColor = color;
+		target.current.setAttribute("material", "color", _drawingColor);
+	}
 
 	useEffect(() => {
-    
+		colorpicker.current.addEventListener('color_changed', e => {
+			colorChanged(e.detail.color);
+		});
+		colorpicker.current.addEventListener('thickness_changed', e => {
+			_lineWidth = (e.detail.thickness < 0.05) ? 1 : e.detail.thickness * 30;
+			console.log(_lineWidth);
+		});
+
         return () => {
             socket.off('user_id');
             socket.off('draw start');
@@ -263,10 +312,14 @@ const ScribubbleVR = () => {
         };
 	}, []);
 
+	function selectPallete(palleteData) {
+		colorChanged(palleteData.color);
+		colorpicker.current.components.colorpicker.setData(palleteData.color, palleteData.point, palleteData.lightness);
+	}
 
 	return (
-		<a-scene id="scene">
-			<a-sky color="#fff"></a-sky>
+		<a-scene id="scene" cursor="rayOrigin: mouse" antialias="true">
+			<a-sky color="#FFF"></a-sky>
 
 			<a-camera 
 				id="camera" 
@@ -279,12 +332,57 @@ const ScribubbleVR = () => {
 				id="scribubble"
 			></a-entity>
 
+
+			<a-box ref={target} id="target" position="3 0 -3"></a-box>
+
 			<a-entity
-				secondary-hand="penSphereSecondary: #penSphereSecondary"
+				secondary-hand
 				oculus-touch-controls="hand: left; model:false"
-			></a-entity>
+			>
+				<a-circle ref={colorpicker} colorpicker="colorWheel: #colorWheel; lightWheel: #lightWheel; thicknessWheel: #thicknessWheel;" id="colorpicker" color="#a8a8a8" radius="2" opacity="1" scale="0.1 0.1 0.1">
+					<a-circle id="colorWheel" position="0 0 0.1" rotation="0 0 0" class="wheels"></a-circle>
+					{/* <a-plane id="lightWheel" position="1.2 0 -3" width="0.1" height="2" class="wheels"></a-plane> */}
+					<a-plane id="lightWheel" position="0 -1.1 0.1" width="2" height="0.15" class="wheels"></a-plane>
+					{/* <a-triangle id="thicknessWheel" color="#000" position="-1.2 0 -3" vertex-a="-0.1 -1 0" vertex-b="0.1 -1 0" vertex-c="0 1 0" class="wheels"></a-triangle> */}
+					<a-triangle id="thicknessWheel" color="#000" position="0 1.1 0.1" vertex-a="-1 0 0" vertex-b="1 -0.1 0" vertex-c="1 0.1 0"></a-triangle>
+					<a-plane id="thicknessWheelCol" position="0 1.1 0.11" material="side: double; color: #FFF; transparent: true; opacity: 0"  width="2" height="0.2" class="wheels"></a-plane>
+					
+					<AddPalleteBT
+						posY={0.75 + 0.6}
+						buttonColor={"red"}
+						clicked={() => {
+							setPallete(prev => [...prev, colorpicker.current.components.colorpicker.getData() ])
+						}}
+					>
+					</AddPalleteBT>
+					{
+						pallete.map((e, idx) => {
+							return (
+								<Pallete
+									posY={0.75 - 0.6 * idx}
+									color={e.color}
+									clicked={() => {
+										console.log(e.color);
+										selectPallete(e)
+									}}
+									removed={() => {
+										// setPallete(prev => [...prev.slice(0, idx), ...prev.slice(idx + 1, prev.length - 1)] )
+										setPallete(prev => {
+											// const temp = [...prev];
+											prev.splice(idx, 1);
+											console.log(prev);
+											return [...prev];
+										});
+									}
+								}></Pallete>
+							)
+						})
+					}
+				</a-circle>
+			</a-entity>
+			
 			<a-entity
-				primary-hand="scribubble: #scribubble;"
+				primary-hand="scribubble: #scribubble; raycaster: #raycaster;"
 				oculus-touch-controls="hand: right; model:false"
 			></a-entity>
 
@@ -294,16 +392,14 @@ const ScribubbleVR = () => {
 				radius="0.001" 
 				material="opacity: 1"
 			></a-sphere>
-			<a-sphere
-				id="penSphereSecondary"
-				color="red" 
-				radius="0.01" 
-				material="opacity: 0.7"
-			></a-sphere>
-<a-box position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9" shadow="" material="" geometry=""></a-box>
-<a-sphere position="0 1.25 -5" radius="1.25" color="#EF2D5E" shadow="" material="" geometry=""></a-sphere>
-<a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D" shadow="" material="" geometry=""></a-cylinder>
-<a-plane position="0 0 -4" rotation="-90 0 0" width="4" height="4" color="#7BC8A4" shadow="" material="" geometry=""></a-plane>
+
+			{/* <a-entity laser-controls="hand: left;" raycaster="lineColor: red; lineOpacity: 0.5"></a-entity> */}
+			<a-entity id="raycaster" laser-controls="hand: right;" raycaster="objects: .wheels; lineColor: blue; lineOpacity: 0.5"></a-entity>
+
+			{/* <a-box position="-1 0.5 1" rotation="0 45 0" color="#4CC3D9" shadow="" material="" geometry=""></a-box> */}
+			{/* <a-sphere position="0 1.25 -5" radius="1.25" color="#EF2D5E" shadow="" material="" geometry=""></a-sphere>
+			<a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D" shadow="" material="" geometry=""></a-cylinder>
+			<a-plane position="0 0 -4" rotation="-90 0 0" width="4" height="4" color="#7BC8A4" shadow="" material="" geometry=""></a-plane> */}
 		</a-scene>
 	);
 };
