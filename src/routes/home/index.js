@@ -18,7 +18,8 @@ let composer, group;
 
 const Home = () => {
   function init() {
-    renderer = new THREE.WebGLRenderer();
+    renderer = new THREE.WebGLRenderer({ alpha: true });
+    renderer.setClearColor(0xffffff, 0);
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
     // renderer.setClearColor(0x000000, 0);
@@ -45,7 +46,6 @@ const Home = () => {
     controls.update();
 
     // scene
-
     const scene = new THREE.Scene();
     scene.background = new THREE.Color("rgb(250, 250, 250)");
 
@@ -64,51 +64,30 @@ const Home = () => {
     scene.add(group);
 
     let colorsArray = [
-      "2CD8D5",
-      "C5C1FF",
-      "FFBAC3",
-      "5D9FFF",
-      "B8DCFF",
+      "4567F6",
+      "9FE3F7",
+      "EF88DE",
+      "E8ECF5",
+      "E0E0E0",
       "6BBBFF",
-
-      // "d5e2f5",
-      // "c3cfe2",
-      // "edd8ed",
-      // "b9e5eb",
-      // "b3c5e8",
-      // "95b4de",
-      // "bdbcf7",
-      // "f5cbd5",
-      // "fff1eb",
-      // "c2ebff",
-      // "accbee",
-      // "e7f0fd",
-      // "e6e9f0",
-      // "eef1f5",
-      // "f7ecda",
-      // "d8daf2",
-      // "efe1f2",
     ];
 
-    for (let i = 0; i < 300; ++i) {
+    for (let i = 0; i < 200; i++) {
       // fill scene with coloured cubes
       let randomRadius = Math.random();
       let colorPick =
         colorsArray[Math.floor(Math.random() * colorsArray.length)];
       let color = parseInt(`0x${colorPick}`, 16);
       let mat = new THREE.MeshPhongMaterial({
-        //color: 0x61b5e5,
-        //color: 0x8ad4ff,
-        //emissive: 0x112244,
         color: color,
         emissive: color,
         transparent: true,
         opacity: 0.6,
         shininess: 100,
       });
-      // console.log(mat.color);
+
       const mesh = new THREE.Mesh(
-        new THREE.SphereGeometry(randomRadius, 32, 16),
+        new THREE.SphereGeometry(randomRadius, 36, 18),
         mat
       );
 
@@ -116,9 +95,9 @@ const Home = () => {
       mesh.position.y = Math.random() * 30 - 15;
       mesh.position.z = Math.random() * 30 - 15;
 
-      mesh.rotation.x = Math.random() * Math.PI * 2;
-      mesh.rotation.y = Math.random() * Math.PI * 2;
-      mesh.rotation.z = Math.random() * Math.PI * 2;
+      mesh.rotation.x = Math.random() * Math.PI * 3;
+      mesh.rotation.y = Math.random() * Math.PI * 1;
+      mesh.rotation.z = Math.random() * Math.PI * 3;
 
       group.add(mesh);
     }
@@ -126,18 +105,6 @@ const Home = () => {
     // post-processing
     composer = new EffectComposer(renderer);
     const renderPass = new RenderPass(scene, camera);
-    const params = {
-      shape: 1,
-      radius: 4,
-      rotateR: Math.PI / 12,
-      rotateB: (Math.PI / 12) * 2,
-      rotateG: (Math.PI / 12) * 3,
-      scatter: 0,
-      blending: 1,
-      blendingMode: 1,
-      greyscale: false,
-      disable: false,
-    };
 
     composer.addPass(renderPass);
 
@@ -155,8 +122,8 @@ const Home = () => {
 
     const delta = clock.getDelta();
     stats.update();
-    group.rotation.x += (delta * rotationSpeed) / 10;
-    group.rotation.y += delta * rotationSpeed;
+    group.rotation.x += delta * rotationSpeed;
+    group.rotation.y += (delta * rotationSpeed) / 5;
     composer.render(delta);
   }
 
@@ -166,37 +133,29 @@ const Home = () => {
   }, []);
 
   return (
-    <div>
-      <Nav />
-      <Wrapper>
-        <BubbleContainer>
+    <Wrapper>
+      <Title>
+        Welcome to new ways to Scribble, an interactive expression of your
+        thoughts on this Website
+      </Title>
+      <Room>
+        <CreateBubble>
           <Link href="/web">
-            <CreateBubble>
-              <Text>Click to </Text>
-              <Text>Create your Bubble</Text>
-            </CreateBubble>
+            <Text>Create your Bubble with web</Text>
           </Link>
-          <Bubble />
-        </BubbleContainer>
-        <Inner>
-          {/* <Link activeClassName="active" href="/vr">
-            VR
-          </Link> */}
-          <IntroText top={`0`} left={`100px`}>
-            Welcome to
-          </IntroText>
-          <IntroText top={`50px`} left={`640px`}>
-            new ways to Scribble,
-          </IntroText>
-          <IntroText top={`150px`} left={`80px`}>
-            an interactive expression of your thoughts
-          </IntroText>
-          <IntroText top={`250px`} left={`680px`}>
-            on this Website
-          </IntroText>
-        </Inner>
-      </Wrapper>
-    </div>
+        </CreateBubble>
+
+        <CreateBubble>
+          <Link href="/vr">
+            <Text>Create your Bubble with VR</Text>
+          </Link>
+        </CreateBubble>
+      </Room>
+      <Credits>
+        Images by <a href="https://">Scribubble</a>, licensed under{" "}
+        <span>youjin, hyejin, yechan, subin, jiheun, yeji</span>
+      </Credits>
+    </Wrapper>
   );
 };
 
@@ -212,60 +171,48 @@ const Wrapper = styled.div`
   position: absolute;
 `;
 
+const Title = styled.h1`
+  font-size: 26px;
+  margin-top: 15px;
+  font-weight: bold;
+  font-family: "Poiret One", cursive;
+  color: ${({ theme }) => theme.black};
+  cursor: pointer;
+`;
+
+const Room = styled.div`
+  padding: 15vh 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+`;
+
 const CreateBubble = styled.div`
-  width: 200px;
-  height: 200px;
+  width: 60vh;
+  height: 60vh;
+  margin: 0 70px;
   border-radius: 50%;
-  border: 0.2px dashed grey;
-  background-image: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  opacity: 0.1;
+  background-image: linear-gradient(125deg, #e8ecf5 0%, #4567f6 100%);
+  opacity: 0.6;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  transition: all 1s ease-in-out;
+  transition: all 2s ease-in-out;
 
   &:hover {
-    background-image: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    opacity: 0.8;
+    background-image: linear-gradient(135deg, #9fe3f7 0%, #4567f6 100%);
+    opacity: 0.7;
   }
 `;
 
 const Text = styled.span`
-  padding: 5px 0;
-  font-size: 14px;
-  z-index: 9;
-`;
-const Inner = styled.div`
-  padding-top: 120px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  width: 1120px;
-  position: relative;
+  font-size: 18px;
+  color: black;
 `;
 
-const IntroText = styled.h1`
+const Credits = styled.div`
+  margin-bottom: 15px;
+  font-size: 18px;
   font-family: "Poiret One", cursive;
-  font-size: 40px;
-  color: ${({ theme }) => theme.black};
-  position: absolute;
-  top: ${({ top }) => top};
-  left: ${({ left }) => left};
-`;
-
-const BubbleContainer = styled.div`
-  width: 100%;
-  height: 100vh;
-  background: inherit;
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 9;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  /* display: block;
-  margin: 0 auto;
-  cursor: move; */
 `;
