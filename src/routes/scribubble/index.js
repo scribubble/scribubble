@@ -100,6 +100,12 @@ class Scribubble extends Component {
 		this.renderer.setSize(window.innerWidth, window.innerHeight);
 		this.element.appendChild(this.renderer.domElement);
 
+		// 도형 생성시 입체표현을 위한 빛 추가
+		this.scene.add( new THREE.AmbientLight( 0x404040 ));
+		const light = new THREE.PointLight( 0xffffff, 1.5 );
+		light.position.set( 0, 500, 3000 );
+		this.scene.add( light );
+
 		this.controls = new OrbitControls(this.camera, this.renderer.domElement);
 		
 		document.addEventListener('mousewheel', (e) => {
@@ -247,24 +253,13 @@ class Scribubble extends Component {
 			}, this.objEntity);
 				
 			if (!this.nameTag[data.user_id]) {
-				const nametagText = new TextSprite({
+				this.nameTag[data.user_id] = new TextSprite({
 					text: data.user_id,
 					fontFamily: 'Arial, Helvetica, sans-serif',
 					fontSize: 1,
-					color: '#4262FF',
-				});
-				
-				const nametagBG = new THREE.Sprite( new THREE.SpriteMaterial({ color: '#E7ECF6' }) );
-				nametagText.add( nametagBG );
-
-				const nametag = new THREE.Object3D();
-				nametag.add(nametagText);
-				nametag.scale.set(0.02, 0.02, 0.02);
-				this.nameTag[data.user_id] = nametag;
-
+					color: '#ffbbff',
+				});	
 				this.scene.add(this.nameTag[data.user_id]);
-
-				console.log(sprite);
 			}
 			this.nameTag[data.user_id].position.copy(data.mousePos);
 
@@ -568,7 +563,7 @@ class Scribubble extends Component {
 	 * @param {Obejct} shape 생성할 도형 이름
 	 */
 	createShape = (shape, extraData) => {
-		const material = new THREE.MeshBasicMaterial( { color: this.state.drawingColor } );
+		const material = new THREE.MeshPhongMaterial( { color: this.state.drawingColor, shininess: 0 } );
 		let geometry, shapeObj;
 
 		if (shape === 'SQUARE') {
