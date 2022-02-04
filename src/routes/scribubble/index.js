@@ -63,192 +63,6 @@ const MODE = {
 };
 
 class Scribubble extends Component {
-<<<<<<< HEAD
-  state = {
-    mode: MODE.EXPLORING,
-    openPanel: false,
-    drawingColor: "#000000",
-    linewidth: 1,
-    lineDashed: false,
-    pallete: [],
-    zoom: 3,
-  };
-
-  constructor() {
-    super();
-  }
-
-  componentDidMount() {
-    this.init();
-
-    this.initListener();
-
-    this.initSocketListener();
-  }
-
-  componentWillUnmount() {
-    this.removeSocketListener();
-  }
-
-  init() {
-    this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0xffffff);
-
-    this.camera = new THREE.PerspectiveCamera(
-      60,
-      window.innerWidth / window.innerHeight,
-      0.001,
-      10000
-    );
-    this.camera.position.set(0, 0, 1);
-
-    this.renderer = new THREE.WebGLRenderer({ antialias: true });
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.element.appendChild(this.renderer.domElement);
-
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-
-    document.addEventListener("mousewheel", (e) => {
-      console.log(this.controls.getDistance());
-
-      this.setState({ zoom: this.controls.getDistance() });
-    });
-    this.controls.addEventListener("change", (e) => {
-      console.log("AA", this.camera.position.z);
-    });
-
-    this.controls.maxDistance = 10;
-
-    // 다른 오브젝트들의 부모가 될 상위 오브젝트 (line 및 도형 등 선택이 가능한 오브젝트들의 부모)
-    this.objEntity = new THREE.Object3D();
-    this.scene.add(this.objEntity);
-    console.log("@@@@@@@@", this.controls.getDistance());
-
-    // 선택모드 시 선택될 수 있는 오브젝트 위치를 보여줄 오브젝트
-    const sphGeometry = new THREE.SphereGeometry(0.1);
-    const sphMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-    this.sphereInter = new THREE.Mesh(sphGeometry, sphMaterial);
-    this.sphereInter.visible = false;
-    this.scene.add(this.sphereInter);
-
-    this.transformControls = new TransformControls(
-      this.camera,
-      this.renderer.domElement
-    );
-    this.scene.add(this.transformControls);
-
-    this.transformControls.addEventListener("dragging-changed", (e) => {
-      if (this.state.mode === MODE.SELECTING) this.controls.enabled = !e.value;
-    });
-
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshBasicMaterial({ color: 0x4cc3d9 });
-    const cube = new THREE.Mesh(geometry, material);
-    cube.position.x = -1;
-    cube.position.y = 0.5;
-    cube.position.z = -3;
-    cube.rotation.x = 0;
-    cube.rotation.y = 45;
-    cube.rotation.z = 0;
-    this.objEntity.add(cube);
-    const geometry2 = new THREE.SphereGeometry(1.25, 36, 18);
-    const material2 = new THREE.MeshBasicMaterial({ color: 0xef2d5e });
-    const sphere = new THREE.Mesh(geometry2, material2);
-    sphere.position.x = 0;
-    sphere.position.y = 1.25;
-    sphere.position.z = -5;
-    this.objEntity.add(sphere);
-    const geometry3 = new THREE.CylinderGeometry(0.5, 0.5, 1.5, 36);
-    const material3 = new THREE.MeshBasicMaterial({ color: 0xffc65d });
-    const cylinder = new THREE.Mesh(geometry3, material3);
-    cylinder.position.x = 1;
-    cylinder.position.y = 0.75;
-    cylinder.position.z = -3;
-    this.objEntity.add(cylinder);
-    const geometry4 = new THREE.PlaneGeometry(4, 4);
-    const material4 = new THREE.MeshBasicMaterial({
-      color: 0x7bc8a4,
-      side: THREE.DoubleSide,
-    });
-    const plane = new THREE.Mesh(geometry4, material4);
-    plane.position.x = 0;
-    plane.position.y = 0;
-    plane.position.z = -4;
-    plane.rotation.x = 55;
-    plane.rotation.y = 0;
-    plane.rotation.z = 0;
-    this.objEntity.add(plane);
-    this.renderer.render(this.scene, this.camera);
-
-    this.raycaster = new THREE.Raycaster();
-
-    // 그리고 있는지 여부
-    this.isDrawing = false;
-
-    // 마우스 위치
-    this.mousePos = new THREE.Vector3();
-
-    // 누르거나 누르고있는 키 들
-    this.keysPressed = {}; // 키 다중 입력 처리용
-
-    // 유저 고유 id
-    this.user_id = "aaa";
-
-    // 접속해 있는 유저들의 id와 Tag저장됨
-    this.nameTag = {};
-
-    // 타겟팅 중인 오브젝트
-    this.targetObj = null;
-
-    const animate = () => {
-      this.renderer.render(this.scene, this.camera);
-      this.controls.update();
-      requestAnimationFrame(animate);
-    };
-    animate();
-  }
-
-  initListener() {
-    window.addEventListener("resize", this.windowResize);
-
-    this.renderer.domElement.addEventListener("mousemove", this.mouseMove);
-
-    document.addEventListener("keydown", this.keyDown);
-
-    document.addEventListener("keyup", this.keyUp);
-  }
-
-  initSocketListener() {
-    // 버블에 저장된 데이터 요청
-    const currentBubble = "room1";
-    socket.emit("enter bubble", currentBubble);
-
-    socket.on("user_id", (data) => {
-      this.user_id = data.user_id;
-    });
-
-    socket.on("draw start", (data) => {
-      createLineAndAdd(
-        data.user_id,
-        {
-          width: data.linewidth,
-          color: data.color,
-          dashed: data.dashed,
-          geo: createLineGeometry(
-            data.user_id,
-            new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z)
-          ),
-        },
-        this.objEntity
-      );
-
-      if (!this.nameTag[data.user_id]) {
-        this.nameTag[data.user_id] = new TextSprite({
-          text: data.user_id,
-          fontFamily: "Arial, Helvetica, sans-serif",
-          fontSize: 1,
-          color: "#ffbbff",
-=======
 	state = {
 		mode: MODE.EXPLORING,
 		openPanel: false,
@@ -421,7 +235,6 @@ class Scribubble extends Component {
 
         socket.on('user_id', (data) => {
 			this.user_id = data.user_id;
->>>>>>> develop
         });
         this.scene.add(this.nameTag[data.user_id]);
       }
@@ -476,40 +289,6 @@ class Scribubble extends Component {
     });
   }
 
-<<<<<<< HEAD
-  removeSocketListener = () => {
-    window.removeEventListener("resize", this.windowResize);
-
-    this.renderer.domElement.removeEventListener("mousemove", this.mouseMove);
-
-    document.removeEventListener("keydown", this.keyDown);
-
-    document.removeEventListener("keyup", this.keyUp);
-
-    socket.off("user_id");
-    socket.off("draw start");
-    socket.off("drawing");
-    socket.off("move line");
-    socket.off("remove current");
-    socket.off("get saved bubble");
-    socket.close();
-  };
-
-  windowResize = () => {
-    const width = document.body.clientWidth;
-    const height = document.body.clientHeight;
-
-    this.camera.aspect = width / height;
-    this.camera.updateProjectionMatrix();
-
-    this.renderer.setSize(width, height);
-  };
-
-  drawStart = () => {
-    this.isDrawing = true;
-
-    this.transformControls.detach();
-=======
 		socket.on('draw start', (data) => {
 			createLineAndAdd(data.user_id, {
 				width: data.linewidth,
@@ -990,7 +769,6 @@ class Scribubble extends Component {
 		);
 	} 
 };
->>>>>>> develop
 
     // createLineInScene(user_id, {
     // 	width: params.linewidth,
