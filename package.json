@@ -22,11 +22,11 @@
     "babel-plugin-styled-components": "^2.0.2",
     "enzyme": "^3.10.0",
     "enzyme-adapter-preact-pure": "^2.0.0",
-    "eslint": "^6.0.1",
+    "eslint": "^8.7.0",
     "eslint-config-preact": "^1.1.0",
-    "jest": "^24.9.0",
+    "jest": "^27.4.7",
     "jest-preset-preact": "^1.0.0",
-    "preact-cli": "^3.0.0",
+    "preact-cli": "^3.3.3",
     "sirv-cli": "1.0.3"
   },
   "dependencies": {
