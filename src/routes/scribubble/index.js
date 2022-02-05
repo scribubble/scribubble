@@ -40,9 +40,9 @@ import io, { connect } from "socket.io-client";
 
 import style from "./style.css";
 
-const server_host = ":4000";
+const server_host = process.env.SERVER_URL;
 // https 로 테스트할때
-// const server_host = "https://localhost:4000";
+// const server_host = "";
 
 const socket = io(server_host, {});
 // https 로 테스트할때
