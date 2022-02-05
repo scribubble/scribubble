@@ -248,18 +248,28 @@ class Scribubble extends Component {
 				width: data.linewidth,
 				color: data.color,
 				dashed: data.dashed,
-				geo: createLineGeometry(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z)),
-				name: data.name,
+				geo: createLineGeometry(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z))
 			}, this.objEntity);
 				
 			if (!this.nameTag[data.user_id]) {
-				this.nameTag[data.user_id] = new TextSprite({
+				const nametagText = new TextSprite({
 					text: data.user_id,
 					fontFamily: 'Arial, Helvetica, sans-serif',
 					fontSize: 1,
-					color: '#ffbbff',
-				});	
+					color: '#4262FF',
+				});
+				
+				const nametagBG = new THREE.Sprite( new THREE.SpriteMaterial({ color: '#E7ECF6' }) );
+				nametagText.add( nametagBG );
+
+				const nametag = new THREE.Object3D();
+				nametag.add(nametagText);
+				nametag.scale.set(0.02, 0.02, 0.02);
+				this.nameTag[data.user_id] = nametag;
+
 				this.scene.add(this.nameTag[data.user_id]);
+
+				console.log(sprite);
 			}
 			this.nameTag[data.user_id].position.copy(data.mousePos);
 

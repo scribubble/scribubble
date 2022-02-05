@@ -10,7 +10,8 @@
     "dev": "preact watch --port 8888",
     "dev-safe": "preact  watch --port 8888 --https --key localhost-key.pem --cert localhost.pem",
     "lint": "eslint src",
-    "test": "jest"
+    "test": "jest",
+    "np-build": "preact build --no-prerender"
   },
   "eslintConfig": {
     "extends": "preact",
