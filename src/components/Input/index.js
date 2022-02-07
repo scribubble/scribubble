@@ -42,6 +42,7 @@ export const LengthInput = styled.input.attrs(props => ({
 `;
 
 export const ZoomInput = styled.input.attrs(props => ({
+    readOnly: true,
     type: "number"
 }))`
     &::-webkit-outer-spin-button,

@@ -70,7 +70,7 @@ class Scribubble extends Component {
 		linewidth: 1,
 		lineDashed: false,
 		pallete: [],
-		zoom: 3
+		zoom: 1
 	};
 
 	constructor() {
@@ -617,8 +617,12 @@ class Scribubble extends Component {
 	}
 
 	zoomControl = (diff) => {
-		this.setState(prev => ({ zoom: prev.zoom + diff }));
-		// this.controls.zoom
+		const wheelEvt = document.createEvent('MouseEvents');
+		wheelEvt.initEvent('wheel', true, true);
+		wheelEvt.deltaY = diff;
+		this.renderer.domElement.dispatchEvent(wheelEvt);
+  
+		this.setState({ zoom:  this.controls.getDistance() });  
 	}
 
 	render() {
