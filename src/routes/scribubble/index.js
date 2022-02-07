@@ -39,8 +39,9 @@ import { ColBar, DivisionLine, RowBottomBar } from "../../components/Bar";
 import io, { connect } from "socket.io-client";
 
 import style from "./style.css";
+import theme from "../../style/theme"
 
-const server_host = process.env.SERVER_URL;
+const server_host = ":4000";
 // https 로 테스트할때
 // const server_host = "";
 
@@ -126,7 +127,7 @@ class Scribubble extends Component {
 
 		// 선택모드 시 선택될 수 있는 오브젝트 위치를 보여줄 오브젝트
 		const sphGeometry = new THREE.SphereGeometry( 0.1 );
-		const sphMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
+		const sphMaterial = new THREE.MeshBasicMaterial( { color: theme.secondary } );
 		this.sphereInter = new THREE.Mesh( sphGeometry, sphMaterial );
 		this.sphereInter.visible = false;
 		this.scene.add( this.sphereInter );
@@ -256,10 +257,10 @@ class Scribubble extends Component {
 					text: data.user_id,
 					fontFamily: 'Arial, Helvetica, sans-serif',
 					fontSize: 1,
-					color: '#4262FF',
+					color: theme.primary,
 				});
 				
-				const nametagBG = new THREE.Sprite( new THREE.SpriteMaterial({ color: '#E7ECF6' }) );
+				const nametagBG = new THREE.Sprite( new THREE.SpriteMaterial({ color: theme.surface }) );
 				nametagText.add( nametagBG );
 
 				const nametag = new THREE.Object3D();
