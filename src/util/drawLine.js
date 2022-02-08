@@ -52,6 +52,7 @@ export const createLine = (opt) => {
   opt.width = opt.width || 1;
   opt.color = opt.color || new THREE.Color(0, 0, 0);
   opt.dashed = opt.dashed || false;
+  opt.position = opt.position || new THREE.Vector3(0, 0, 0);
 
   var matLine = new LineMaterial({
     color: opt.color,
@@ -67,6 +68,8 @@ export const createLine = (opt) => {
   var line = new Line2(opt.geo, matLine);
   line.computeLineDistances();
   line.name = opt.name;
+  line.position.copy(opt.position);
+  console.log(line.position);
 
   return line;
 };
