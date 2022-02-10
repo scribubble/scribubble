@@ -257,10 +257,11 @@ class Scribubble extends Component {
 					fontFamily: 'Arial, Helvetica, sans-serif',
 					fontSize: 1,
 					color: '#4262FF',
+					backgroundColor: 'rgba(255,0,0,1)',
 				});
 				
-				const nametagBG = new THREE.Sprite( new THREE.SpriteMaterial({ color: '#E7ECF6' }) );
-				nametagText.add( nametagBG );
+				// const nametagBG = new THREE.Sprite( new THREE.SpriteMaterial({ color: '#E7ECF6' }) );
+				// nametagText.add( nametagBG );
 
 				const nametag = new THREE.Object3D();
 				nametag.add(nametagText);
