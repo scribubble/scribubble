@@ -1,4 +1,7 @@
 const theme = {
+  primary: "#4262FF",
+  secondary: "#FF7EE3",
+  surface: "#E7ECF6",
   mainColor: "#4567F6",
   aquaColor: "#9FE3F7",
   pinkColor: "#EF88DE",

@@ -6,3 +6,5 @@ node_modules
 
 /.cache
 package-lock.json
+
+preact.config.js
