@@ -252,3 +252,41 @@ export const MinusButton = (props) => {
         </RoundedButton>
     );
 };
+
+//=============================================================
+// TransfomControl Mode Button
+//=============================================================
+export const MoveButton = (props) => {
+    return (
+        <ToolButton isActive={props.isActive} onClick={props.onClick}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M18 15l3 -3l-3 -3"></path>
+                <circle cx="5" cy="12" r="2"></circle>
+                <path d="M7 12h14"></path>
+            </svg>
+        </ToolButton>
+    );
+};
+export const RotateButton = (props) => {
+    return (
+        <ToolButton isActive={props.isActive} onClick={props.onClick}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M12 16h4v4"></path>
+                <path d="M19.458 11.042c.86 -2.366 .722 -4.58 -.6 -5.9c-2.272 -2.274 -7.185 -1.045 -10.973 2.743c-3.788 3.788 -5.017 8.701 -2.744 10.974c2.227 2.226 6.987 1.093 10.74 -2.515"></path>
+            </svg>
+        </ToolButton>
+    );
+};
+export const ScaleButton = (props) => {
+    return (
+        <ToolButton isActive={props.isActive} onClick={props.onClick}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M4 11v8a1 1 0 0 0 1 1h8m-9 -14v-1a1 1 0 0 1 1 -1h1m5 0h2m5 0h1a1 1 0 0 1 1 1v1m0 5v2m0 5v1a1 1 0 0 1 -1 1h-1"></path>
+                <path d="M4 12h7a1 1 0 0 1 1 1v7"></path>
+            </svg>
+        </ToolButton>
+    );
+};

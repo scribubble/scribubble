@@ -32,6 +32,9 @@ import {
   DashedButton,
   PlusButton,
   MinusButton,
+  MoveButton,
+  RotateButton,
+  ScaleButton,
 } from "../../components/Button";
 import { ColorPicker, LengthInput, ZoomInput } from "../../components/Input";
 import { ColBar, DivisionLine, RowBottomBar } from "../../components/Bar";
@@ -71,7 +74,8 @@ class Scribubble extends Component {
 		linewidth: 1,
 		lineDashed: false,
 		pallete: [],
-		zoom: 1
+		zoom: 1,
+		tfcMode: 'translate'
 	};
 
 	constructor() {
@@ -141,29 +145,59 @@ class Scribubble extends Component {
 		});
 
 		this.transformControls.addEventListener('change', (e) => {
-			// console.log(this.targetObj);
-			if(this.targetObj.type === 'Line2') {
-				socket.emit('move obj', { 
-					bubbleName: this.bubbleName,
-					objName: this.targetObj.name, 
-					tfcPosition: {
+			let msg = '';
+			let data = {
+				bubbleName: this.bubbleName,
+				objName: this.targetObj.name
+			};
+
+			if (this.transformControls.mode === 'translate') {
+				msg = 'move obj';
+        if (this.targetObj.type === 'Line2') {
+          data.tfcPosition = {
 						x: this.targetObj.parent.position.x,
 						y: this.targetObj.parent.position.y,
 						z: this.targetObj.parent.position.z,
-					}
-				});
-			} else {
-				socket.emit('move obj', { 
-					bubbleName: this.bubbleName,
-					objName: this.targetObj.name, 
-					position: {
-						x: this.targetObj.position.x,
-						y: this.targetObj.position.y,
-						z: this.targetObj.position.z,
-					}
-				});
+					};
+        } else {
+				  data.position = {
+					  x: this.targetObj.position.x,
+					  y: this.targetObj.position.y,
+					  z: this.targetObj.position.z,
+				  }
+        }
+			} else if (this.transformControls.mode === 'rotate') {
+				msg = 'rotate obj';
+        if (this.targetObj.type === 'Line2') {
+          data.rotation = {
+						x: this.targetObj.parent.rotation.x,
+						y: this.targetObj.parent.rotation.y,
+						z: this.targetObj.parent.rotation.z,
+					};
+        } else {
+				  data.rotation = {
+					  x: this.targetObj.rotation.x,
+					  y: this.targetObj.rotation.y,
+					  z: this.targetObj.rotation.z,
+				  }
+        }
+			} else if (this.transformControls.mode === 'scale') {
+				msg = 'scale obj';
+        if (this.targetObj.type === 'Line2') {
+          data.scale = {
+						x: this.targetObj.parent.scale.x,
+						y: this.targetObj.parent.scale.y,
+						z: this.targetObj.parent.scale.z,
+					};
+        } else {
+				  data.scale = {
+					  x: this.targetObj.scale.x,
+					  y: this.targetObj.scale.y,
+					  z: this.targetObj.scale.z,
+				  }
+        }
 			}
-			
+			socket.emit(msg, data);
 		});
 		
 		const geometry = new THREE.BoxGeometry( 1, 1, 1 );
@@ -491,6 +525,7 @@ class Scribubble extends Component {
 		});
 		
 		this.targetObj = null;
+		this.setState({ mode: MODE.EXPLORING });
 	}
 
 	keyDown = (event) => {
@@ -521,11 +556,11 @@ class Scribubble extends Component {
 		}
 
 		if (this.keysPressed['q']) {
-			this.transformControls.setMode('translate');
+			this.setTFCMode('translate');
 		} else if (this.keysPressed['w']) {
-			this.transformControls.setMode('rotate');
+			this.setTFCMode('rotate');
 		} else if (this.keysPressed['e']) {
-			this.transformControls.setMode('scale');
+			this.setTFCMode('scale');
 		}
 	}
 	keyUp = (event) => {
@@ -706,6 +741,11 @@ class Scribubble extends Component {
 		this.setState({ zoom:  this.controls.getDistance() });  
 	}
 
+	setTFCMode = mode => {
+		this.setState({ tfcMode : mode });
+		this.transformControls.setMode(mode);
+	}
+
 	render() {
 		return (	
 		<div id="Scribubble" ref={el => this.element = el} >
@@ -811,6 +851,14 @@ class Scribubble extends Component {
 						<SphereButton onClick={e => { this.createShape('SPHERE', null) }}></SphereButton>
 						<CylinderButton onClick={e => { this.createShape('CYLINDER', null) }}></CylinderButton>
 						<PlaneButton onClick={e => { this.createShape('PLANE', null) }}></PlaneButton>
+					</ColBar>
+				}
+				{
+					this.state.mode === MODE.SELECTING &&
+					<ColBar>
+						<MoveButton isActive={this.state.tfcMode === 'translate'} onClick={e => { this.setTFCMode('translate'); }}></MoveButton>
+						<RotateButton isActive={this.state.tfcMode === 'rotate'} onClick={e => { this.setTFCMode('rotate'); }}></RotateButton>
+						<ScaleButton isActive={this.state.tfcMode === 'scale'} onClick={e => { this.setTFCMode('scale'); }}></ScaleButton>
 					</ColBar>
 				}
 			</div>
