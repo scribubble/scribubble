@@ -292,12 +292,7 @@ class Scribubble extends Component {
 			for(let i = 0; i < data.lines.length; i++) {
 				let line = data.lines[i];
 				// console.log(';', line);
-				let pos = line.linePositions;
-				let tfcPos = new THREE.Vector3(
-					line.tfcPosition.x,
-					line.tfcPosition.y,
-					line.tfcPosition.z,
-				);
+				let linePos = line.linePositions;
 
 				createLineAndAdd(line.drawer_id, {
 					width: line.lineWidth,
@@ -306,19 +301,31 @@ class Scribubble extends Component {
 					objName: line.objName,
 					geo: createLineGeometry(
 						line.drawer_id, 
-						new THREE.Vector3(pos[0].x, pos[0].y, pos[0].z)),
+						new THREE.Vector3(linePos[0].x, linePos[0].y, linePos[0].z)),
 				}, this.objEntity);
 				
-				for(let j = 1; j < pos.length; j++) {
-					addPosition(line.drawer_id, new THREE.Vector3(pos[j].x, pos[j].y, pos[j].z));
+				for(let j = 1; j < linePos.length; j++) {
+					addPosition(line.drawer_id, new THREE.Vector3(linePos[j].x, linePos[j].y, linePos[j].z));
 				}
+
+				let pos = new THREE.Vector3(
+					line.position.x,
+					line.position.y,
+					line.position.z,
+				);
+
+				let tfcPos = new THREE.Vector3(
+					line.tfcPosition.x,
+					line.tfcPosition.y,
+					line.tfcPosition.z,
+				);
 
 				let curLine = getLastLine(line.drawer_id);
 				let obj = new THREE.Object3D();
 				obj.position.copy(tfcPos);
 
 				curLine.parent = obj;
-				curLine.position.copy(tfcPos.negate());
+				curLine.position.copy(pos);
 				
 				this.objEntity.add(obj);
 			}
@@ -423,6 +430,8 @@ class Scribubble extends Component {
 		
 		let curLine = getLastLine(this.user_id);
 		let curPos = getCenterPos(curLine);
+		console.log(curLine);
+		console.log(curPos);
 		
 		let obj = new THREE.Object3D();
 		obj.position.copy(curPos);
@@ -433,11 +442,21 @@ class Scribubble extends Component {
 		this.objEntity.add(obj);
 
 		// this.transformControls.attach(obj);
-
+		console.log(curLine);
 		console.log(`draw stop ${this.bubbleName}`);
 		socket.emit('draw stop', {
 			bubbleName: this.bubbleName,
-			user_id: this.user_id
+			user_id: this.user_id,
+			tfcPosition: {
+				x: obj.position.x,
+				y: obj.position.y,
+				z: obj.position.z
+			},
+			position: {
+				x: curLine.position.x,
+				y: curLine.position.y,
+				z: curLine.position.z
+			}
 		});
 	}
 

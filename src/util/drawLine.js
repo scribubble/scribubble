@@ -59,7 +59,7 @@ export const createLine = (opt) => {
     dashSize: 0.1,
     gapSize: 0.1,
     dashed: opt.dashed,
-    name: opt.name,
+    name: opt.objName,
   });
 
   if (window) matLine.resolution.set(window.innerWidth, window.innerHeight);
