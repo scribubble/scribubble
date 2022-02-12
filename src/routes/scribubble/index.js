@@ -309,9 +309,6 @@ class Scribubble extends Component {
 					backgroundColor: theme.surface,
 				});
 				
-				//const nametagBG = new THREE.Sprite( new THREE.SpriteMaterial({ color: theme.surface }) );
-				//nametagText.add( nametagBG );
-
 				const nametag = new THREE.Object3D();
 				nametag.add(nametagText);
 				nametag.scale.set(0.02, 0.02, 0.02);
