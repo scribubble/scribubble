@@ -66,7 +66,7 @@ export const createLine = (opt) => {
 
   var line = new Line2(opt.geo, matLine);
   line.computeLineDistances();
-  line.name = opt.name;
+  line.name = opt.objName;
 
   return line;
 };
