@@ -60,14 +60,13 @@ export const createLine = (opt) => {
     dashSize: 0.1,
     gapSize: 0.1,
     dashed: opt.dashed,
-    name: opt.name,
+    name: opt.objName,
   });
 
   if (window) matLine.resolution.set(window.innerWidth, window.innerHeight);
 
   var line = new Line2(opt.geo, matLine);
   line.computeLineDistances();
-  line.name = opt.name;
   line.position.copy(opt.position);
   console.log(line.position);
 
