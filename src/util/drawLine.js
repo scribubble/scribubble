@@ -68,6 +68,7 @@ export const createLine = (opt) => {
   var line = new Line2(opt.geo, matLine);
   line.computeLineDistances();
   line.position.copy(opt.position);
+  line.name = opt.objName;
   console.log(line.position);
 
   return line;
@@ -84,8 +85,11 @@ export const createLine = (opt) => {
  */
 export const createLineAndAdd = (user_id, opt, parent) => {
   drawData[user_id].myLines.push(createLine(opt));
+  
+  let obj = new THREE.Object3D();
+  obj.add(getLastLine(user_id));
 
-  parent.add(getLastLine(user_id));
+  parent.add(obj);
 };
 
 /**

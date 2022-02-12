@@ -153,49 +153,49 @@ class Scribubble extends Component {
 
 			if (this.transformControls.mode === 'translate') {
 				msg = 'move obj';
-        if (this.targetObj.type === 'Line2') {
-          data.tfcPosition = {
+				if (this.targetObj.type === 'Line2') {
+					data.tfcPosition = {
 						x: this.targetObj.parent.position.x,
 						y: this.targetObj.parent.position.y,
 						z: this.targetObj.parent.position.z,
 					};
-        } else {
-				  data.position = {
-					  x: this.targetObj.position.x,
-					  y: this.targetObj.position.y,
-					  z: this.targetObj.position.z,
-				  }
-        }
+				} else {
+					data.position = {
+						x: this.targetObj.position.x,
+						y: this.targetObj.position.y,
+						z: this.targetObj.position.z,
+					};
+				}
 			} else if (this.transformControls.mode === 'rotate') {
 				msg = 'rotate obj';
-        if (this.targetObj.type === 'Line2') {
-          data.rotation = {
+				if (this.targetObj.type === 'Line2') {
+					data.rotation = {
 						x: this.targetObj.parent.rotation.x,
 						y: this.targetObj.parent.rotation.y,
 						z: this.targetObj.parent.rotation.z,
 					};
-        } else {
-				  data.rotation = {
-					  x: this.targetObj.rotation.x,
-					  y: this.targetObj.rotation.y,
-					  z: this.targetObj.rotation.z,
-				  }
-        }
+				} else {
+					data.rotation = {
+						x: this.targetObj.rotation.x,
+						y: this.targetObj.rotation.y,
+						z: this.targetObj.rotation.z,
+					}
+				}
 			} else if (this.transformControls.mode === 'scale') {
 				msg = 'scale obj';
-        if (this.targetObj.type === 'Line2') {
-          data.scale = {
+				if (this.targetObj.type === 'Line2') {
+					data.scale = {
 						x: this.targetObj.parent.scale.x,
 						y: this.targetObj.parent.scale.y,
 						z: this.targetObj.parent.scale.z,
 					};
-        } else {
-				  data.scale = {
-					  x: this.targetObj.scale.x,
-					  y: this.targetObj.scale.y,
-					  z: this.targetObj.scale.z,
-				  }
-        }
+				} else {
+					data.scale = {
+						x: this.targetObj.scale.x,
+						y: this.targetObj.scale.y,
+						z: this.targetObj.scale.z,
+					}
+				}
 			}
 			socket.emit(msg, data);
 		});
@@ -324,6 +324,12 @@ class Scribubble extends Component {
 			// console.log('drawing');
 			addPosition(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z));
         });
+
+		socket.on('draw stop', (data) => {
+			const target = this.objEntity.getObjectByName(data.objName);
+			target.parent.position.copy(data.tfcPosition);
+			target.position.copy(data.position);
+		});
 		
 		socket.on('remove current', (data) => {
 			removeLastLine(data.user_id, this.scene);
@@ -365,14 +371,9 @@ class Scribubble extends Component {
 				);
 
 				let curLine = getLastLine(line.drawer_id);
-				let emptyObj = new THREE.Object3D();
 				
-				emptyObj.position.copy(tfcPos);
+				curLine.parent.position.copy(tfcPos);
 				curLine.position.copy(pos);
-
-				curLine.parent = emptyObj;
-				
-				this.objEntity.add(curLine.parent);
 			}
 
 		// 		let curLine = getLastLine(this.user_id);
@@ -405,9 +406,14 @@ class Scribubble extends Component {
 		});
 
 		socket.on('move obj', (data) => {
+			console.log(data);
 			const target = this.objEntity.getObjectByName(data.objName);
 			// console.log(target);
-			target.position.set(data.position.x, data.position.y, data.position.z); 
+			if(data.tfcPosition) {
+				target.parent.position.set(data.tfcPosition.x, data.tfcPosition.y, data.tfcPosition.z); 
+			} else {
+				target.position.set(data.position.x, data.position.y, data.position.z); 
+			}
 		});
 	}
 
@@ -423,6 +429,7 @@ class Scribubble extends Component {
 		socket.off('user_id');
 		socket.off('draw start');
 		socket.off('drawing');
+		socket.off('draw stop');
 		socket.off('move line');
 		socket.off('remove current');
 		socket.off('get saved bubble');
@@ -469,35 +476,30 @@ class Scribubble extends Component {
 		this.objIdx++;
 	}
 
-	drawEnd = () => {
+	drawStop = () => {
 		this.isDrawing = false;
 		
 		let curLine = getLastLine(this.user_id);
 		let curPos = getCenterPos(curLine);
-		
-		let obj = new THREE.Object3D();
-		obj.position.copy(curPos);
 
-		curLine.parent = obj;
-		curLine.position.copy(curPos.negate());
-		
-		this.objEntity.add(obj);
-
+		// curLine.parent.position.copy(curPos);
+		// curLine.position.copy(curPos.negate());
 		// this.transformControls.attach(obj);
 
 		// console.log(`draw stop ${this.bubbleName}`);
 		socket.emit('draw stop', {
 			bubbleName: this.bubbleName,
 			user_id: this.user_id,
+			objName: curLine.name,
 			tfcPosition: {
-				x: curLine.parent.position.x,
-				y: curLine.parent.position.y,
-				z: curLine.parent.position.z
+				x: curPos.x,
+				y: curPos.y,
+				z: curPos.z
 			},
 			position: {
-				x: curLine.position.x,
-				y: curLine.position.y,
-				z: curLine.position.z
+				x: -curPos.x,
+				y: -curPos.y,
+				z: -curPos.z
 			}
 		});
 	}
@@ -566,7 +568,7 @@ class Scribubble extends Component {
 		delete this.keysPressed[key];
 	
 		if ((key === ' ' || key === 32) && this.isDrawing) {
-			this.drawEnd();
+			this.drawStop();
 		}
 	}
 
@@ -621,7 +623,7 @@ class Scribubble extends Component {
 		if (e.which !== 1) return;
 
 		if (this.isDrawing)
-			this.drawEnd();
+			this.drawStop();
 	}
 
 	/**
