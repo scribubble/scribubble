@@ -1,4 +1,5 @@
 import styled, { css } from 'styled-components';
+import theme from '../../style/theme';
 
 export const RoundedButton = styled.button`
     border: none;
@@ -9,7 +10,7 @@ export const RoundedButton = styled.button`
         cursor: auto;
     }
     &:not([disabled]):hover svg {
-        stroke: #5c5c5c;
+        stroke: ${theme.darkGrey};
     }
 `;
 export const RoundButton = styled.button`
@@ -22,16 +23,16 @@ export const RoundButton = styled.button`
         cursor: auto;
     }
     &:not([disabled]):hover svg {
-        stroke: #5c5c5c;
+        stroke: ${theme.darkGrey};
     }
 `;
 
 export const ToolButton = styled(RoundedButton)`
     svg {
-        stroke: ${(props) => props.isActive ? '#FF2052': 'currentColor'};
+        stroke: ${(props) => props.isActive ? theme.secondary : 'currentColor'};
     }
     &:not([disabled]):hover svg {
-        stroke: ${(props) => props.isActive ? '#FF2052': '#5c5c5c'};
+        stroke: ${(props) => props.isActive ? theme.secondary : '#5c5c5c'};
     }
 `;
 

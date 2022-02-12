@@ -42,6 +42,7 @@ import { ColBar, DivisionLine, RowBottomBar } from "../../components/Bar";
 import io, { connect } from "socket.io-client";
 
 import style from "./style.css";
+import theme from "../../style/theme"
 
 const server_host = ":4000";
 // https 로 테스트할때
@@ -73,7 +74,7 @@ class Scribubble extends Component {
 		linewidth: 1,
 		lineDashed: false,
 		pallete: [],
-		zoom: 3,
+		zoom: 1,
 		tfcMode: 'translate'
 	};
 
@@ -130,7 +131,7 @@ class Scribubble extends Component {
 
 		// 선택모드 시 선택될 수 있는 오브젝트 위치를 보여줄 오브젝트
 		const sphGeometry = new THREE.SphereGeometry( 0.1 );
-		const sphMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
+		const sphMaterial = new THREE.MeshBasicMaterial( { color: theme.secondary } );
 		this.sphereInter = new THREE.Mesh( sphGeometry, sphMaterial );
 		this.sphereInter.visible = false;
 		this.scene.add( this.sphereInter );
@@ -152,25 +153,49 @@ class Scribubble extends Component {
 
 			if (this.transformControls.mode === 'translate') {
 				msg = 'move obj';
-				data.position = {
-					x: this.targetObj.position.x,
-					y: this.targetObj.position.y,
-					z: this.targetObj.position.z,
-				}
+        if (this.targetObj.type === 'Line2') {
+          data.tfcPosition = {
+						x: this.targetObj.parent.position.x,
+						y: this.targetObj.parent.position.y,
+						z: this.targetObj.parent.position.z,
+					};
+        } else {
+				  data.position = {
+					  x: this.targetObj.position.x,
+					  y: this.targetObj.position.y,
+					  z: this.targetObj.position.z,
+				  }
+        }
 			} else if (this.transformControls.mode === 'rotate') {
 				msg = 'rotate obj';
-				data.rotation ={
-					x: this.targetObj.rotation.x,
-					y: this.targetObj.rotation.y,
-					z: this.targetObj.rotation.z,
-				};
+        if (this.targetObj.type === 'Line2') {
+          data.rotation = {
+						x: this.targetObj.parent.rotation.x,
+						y: this.targetObj.parent.rotation.y,
+						z: this.targetObj.parent.rotation.z,
+					};
+        } else {
+				  data.rotation = {
+					  x: this.targetObj.rotation.x,
+					  y: this.targetObj.rotation.y,
+					  z: this.targetObj.rotation.z,
+				  }
+        }
 			} else if (this.transformControls.mode === 'scale') {
 				msg = 'scale obj';
-				data.scale = {
-					x: this.targetObj.scale.x,
-					y: this.targetObj.scale.y,
-					z: this.targetObj.scale.z,
-				};
+        if (this.targetObj.type === 'Line2') {
+          data.scale = {
+						x: this.targetObj.parent.scale.x,
+						y: this.targetObj.parent.scale.y,
+						z: this.targetObj.parent.scale.z,
+					};
+        } else {
+				  data.scale = {
+					  x: this.targetObj.scale.x,
+					  y: this.targetObj.scale.y,
+					  z: this.targetObj.scale.z,
+				  }
+        }
 			}
 			socket.emit(msg, data);
 		});
@@ -184,7 +209,6 @@ class Scribubble extends Component {
 		cube.rotation.x = 0;
 		cube.rotation.y = 45;
 		cube.rotation.z = 0;
-		cube.name = '12345';
 		this.objEntity.add( cube );
 		const geometry2 = new THREE.SphereGeometry( 1.25, 36, 18 );
 		const material2 = new THREE.MeshBasicMaterial( { color: 0xEF2D5E } );
@@ -259,18 +283,20 @@ class Scribubble extends Component {
 
 	initSocketListener() {
 		// 버블에 저장된 데이터 요청
-		const currentBubble = 'room1'; // 임시
+		const currentBubble = this.bubbleName;
 		socket.emit('enter bubble', currentBubble);
 
-    socket.on('user_id', (data) => {
-			this.user_id = data.user_id;
-    });
+		socket.on('user_id', (data) => {
+				this.user_id = data.user_id;
+		});
  
 		socket.on('draw start', (data) => {
+			// console.log('draw start');
 			createLineAndAdd(data.user_id, {
 				width: data.linewidth,
 				color: data.color,
 				dashed: data.dashed,
+				objName: data.objName,
 				geo: createLineGeometry(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z))
 			}, this.objEntity);
 				
@@ -279,11 +305,12 @@ class Scribubble extends Component {
 					text: data.user_id,
 					fontFamily: 'Arial, Helvetica, sans-serif',
 					fontSize: 1,
-					color: '#4262FF',
+					color: theme.primary,
+					backgroundColor: theme.surface,
 				});
 				
-				const nametagBG = new THREE.Sprite( new THREE.SpriteMaterial({ color: '#E7ECF6' }) );
-				nametagText.add( nametagBG );
+				//const nametagBG = new THREE.Sprite( new THREE.SpriteMaterial({ color: theme.surface }) );
+				//nametagText.add( nametagBG );
 
 				const nametag = new THREE.Object3D();
 				nametag.add(nametagText);
@@ -291,14 +318,13 @@ class Scribubble extends Component {
 				this.nameTag[data.user_id] = nametag;
 
 				this.scene.add(this.nameTag[data.user_id]);
-
-				console.log(sprite);
 			}
 			this.nameTag[data.user_id].position.copy(data.mousePos);
 
 		});
 
         socket.on('drawing', (data) => {
+			// console.log('drawing');
 			addPosition(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z));
         });
 		
@@ -307,32 +333,68 @@ class Scribubble extends Component {
 		});
 
 		socket.on('get saved bubble', (data) => {
-			// console.log(data);
-			// console.log(data.line.length);
+			// console.log(`get saved bubble ${data}`);
+			// console.log(data.lines);
 
-			for(let i = 0; i < data.line.length; i++) {
-				let line = data.line[i];
+			for(let i = 0; i < data.lines.length; i++) {
+				let line = data.lines[i];
 				// console.log(';', line);
-				let pos = line.linePositions;
+				let linePos = line.linePositions;
 
 				createLineAndAdd(line.drawer_id, {
 					width: line.lineWidth,
 					color: line.lineColor,
 					dashed: line.lineDashed,
+					objName: line.objName,
 					geo: createLineGeometry(
 						line.drawer_id, 
-						new THREE.Vector3(pos[0].x, pos[0].y, pos[0].z)),
-					name: line.name,
+						new THREE.Vector3(linePos[0].x, linePos[0].y, linePos[0].z)),
 				}, this.objEntity);
 				
-				for(let j = 1; j < pos.length; j++) {
-					addPosition(line.drawer_id, new THREE.Vector3(pos[j].x, pos[j].y, pos[j].z));
+				for(let j = 1; j < linePos.length; j++) {
+					addPosition(line.drawer_id, new THREE.Vector3(linePos[j].x, linePos[j].y, linePos[j].z));
 				}
+
+				let pos = new THREE.Vector3(
+					line.position.x,
+					line.position.y,
+					line.position.z,
+				);
+
+				let tfcPos = new THREE.Vector3(
+					line.tfcPosition.x,
+					line.tfcPosition.y,
+					line.tfcPosition.z,
+				);
+
+				let curLine = getLastLine(line.drawer_id);
+				let emptyObj = new THREE.Object3D();
+				
+				emptyObj.position.copy(tfcPos);
+				curLine.position.copy(pos);
+
+				curLine.parent = emptyObj;
+				
+				this.objEntity.add(curLine.parent);
 			}
 
-			for(let i = 0; i < data.shape.length; i++) {
-				let item = data.shape[i];
-				this.createShape(item.shape, {objName: item.objName, position: item.position});
+		// 		let curLine = getLastLine(this.user_id);
+		// let curPos = getCenterPos(curLine);
+		
+		// let obj = new THREE.Object3D();
+		// obj.position.copy(curPos);
+
+		// curLine.parent = obj;
+		// curLine.position.copy(curPos.negate());
+		
+		// this.objEntity.add(obj);
+
+		// this.transformControls.attach(obj);
+
+
+			for(let i = 0; i < data.shapes.length; i++) {
+				let item = data.shapes[i];
+				this.createShape(item.shape, {objName: item.objName, color: item.color, position: item.position});
 			}
 		});
 
@@ -342,12 +404,12 @@ class Scribubble extends Component {
 		});
 
 		socket.on("create shape", (data) => {
-			this.createShape(data.shape, {objName: data.objName, position: data.position});
+			this.createShape(data.shape, {objName: data.objName, color: data.color, position: data.position});
 		});
 
 		socket.on('move obj', (data) => {
 			const target = this.objEntity.getObjectByName(data.objName);
-			// console.log(data);
+			// console.log(target);
 			target.position.set(data.position.x, data.position.y, data.position.z); 
 		});
 	}
@@ -399,7 +461,7 @@ class Scribubble extends Component {
 			linewidth: this.state.linewidth,
 			color: this.state.drawingColor,
 			dashed: this.state.lineDashed,
-			name: this.user_id + this.objIdx,
+			objName: this.user_id + this.objIdx,
 			mousePos: {
 				x: this.mousePos.x,
 				y: this.mousePos.y,
@@ -426,10 +488,20 @@ class Scribubble extends Component {
 
 		// this.transformControls.attach(obj);
 
-		console.log('draw stop');
+		// console.log(`draw stop ${this.bubbleName}`);
 		socket.emit('draw stop', {
 			bubbleName: this.bubbleName,
-			user_id: this.user_id
+			user_id: this.user_id,
+			tfcPosition: {
+				x: curLine.parent.position.x,
+				y: curLine.parent.position.y,
+				z: curLine.parent.position.z
+			},
+			position: {
+				x: curLine.position.x,
+				y: curLine.position.y,
+				z: curLine.position.z
+			}
 		});
 	}
 
@@ -508,7 +580,7 @@ class Scribubble extends Component {
 		if (!this.transformControls.dragging && this.sphereInter.visible) {
 			this.targetObj = this.selectingObj;
 			this.transformControls.attach(
-				this.targetObj === 'Line2' ?
+				this.targetObj.type === 'Line2' ?
 					this.targetObj.parent:
 					this.targetObj
 			);
@@ -594,37 +666,38 @@ class Scribubble extends Component {
 	/**
 	 * 화면 중앙에 도형 생성
 	 * @param {String} shape 생성할 도형 이름
-	 * @param {Obejct} shape 생성할 도형 이름
+	 * @param {Obejct} shape 생성할 도형 속성들
 	 */
-	createShape = (shape, extraData) => {
-		const material = new THREE.MeshPhongMaterial( { color: this.state.drawingColor, shininess: 0 } );
-		let geometry, shapeObj;
+	createShape = (shape, shapeAttribute) => {
+		if(shapeAttribute === null) { // 내가 그린 경우
+			const material = new THREE.MeshPhongMaterial( { color: this.state.drawingColor, shininess: 0 } );
 
-		if (shape === 'SQUARE') {
-			geometry = new THREE.BoxGeometry( 0.1, 0.1, 0.1 );
-		} else if (shape === 'SPHERE') {
-			geometry = new THREE.SphereGeometry( 0.1, 32, 16 );
-		} else if (shape === 'CYLINDER') {
-			geometry = new THREE.CylinderGeometry( 0.1, 0.1, 0.1, 36 );
-		} else if (shape === 'PLANE') {
-			geometry = new THREE.PlaneGeometry( 0.1, 0.1 );
-			material.side = THREE.DoubleSide;
-		}
+			let geometry, shapeObj;
 
-		shapeObj = new THREE.Mesh(geometry, material);
+			if (shape === 'SQUARE') {
+				geometry = new THREE.BoxGeometry( 0.1, 0.1, 0.1 );
+			} else if (shape === 'SPHERE') {
+				geometry = new THREE.SphereGeometry( 0.1, 32, 16 );
+			} else if (shape === 'CYLINDER') {
+				geometry = new THREE.CylinderGeometry( 0.1, 0.1, 0.1, 36 );
+			} else if (shape === 'PLANE') {
+				geometry = new THREE.PlaneGeometry( 0.1, 0.1 );
+				material.side = THREE.DoubleSide;
+			}
 
-		if(extraData === null) {
+			shapeObj = new THREE.Mesh(geometry, material);
 			shapeObj.position.copy(getCenterPosition(this.camera, this.scene.position, this.raycaster));
 
 			let newObjName = this.user_id + this.objIdx;
 			this.objIdx++;
-			
 			shapeObj.name = newObjName;
+
 			this.objEntity.add( shapeObj );
 
 			socket.emit('create shape', {
 				bubbleName: this.bubbleName,
 				shape: shape, 
+				color: this.state.drawingColor,
 				objName: newObjName, 
 				position: {
 					x: shapeObj.position.x,
@@ -632,17 +705,40 @@ class Scribubble extends Component {
 					z: shapeObj.position.z
 				}
 			});
-		} else {
-			shapeObj.position.set(extraData.position.x, extraData.position.y, extraData.position.z);
-			shapeObj.name = extraData.objName;
+		} else { // 타인이 그린 경우, 저장된 데이터로 그리는 경우
+			const material = new THREE.MeshPhongMaterial( { color: shapeAttribute.color, shininess: 0 } );
+
+			let geometry, shapeObj;
+
+			if (shape === 'SQUARE') {
+				geometry = new THREE.BoxGeometry( 0.1, 0.1, 0.1 );
+			} else if (shape === 'SPHERE') {
+				geometry = new THREE.SphereGeometry( 0.1, 32, 16 );
+			} else if (shape === 'CYLINDER') {
+				geometry = new THREE.CylinderGeometry( 0.1, 0.1, 0.1, 36 );
+			} else if (shape === 'PLANE') {
+				geometry = new THREE.PlaneGeometry( 0.1, 0.1 );
+				material.side = THREE.DoubleSide;
+			}
+
+			shapeObj = new THREE.Mesh(geometry, material);
+
+			const pos = shapeAttribute.position;
+			shapeObj.position.copy(new THREE.Vector3(pos.x, pos.y, pos.z));
+
+			shapeObj.name = shapeAttribute.objName;
+
 			this.objEntity.add( shapeObj );
 		}
-
 	}
 
 	zoomControl = (diff) => {
-		this.setState(prev => ({ zoom: prev.zoom + diff }));
-		// this.controls.zoom
+		const wheelEvt = document.createEvent('MouseEvents');
+		wheelEvt.initEvent('wheel', true, true);
+		wheelEvt.deltaY = diff;
+		this.renderer.domElement.dispatchEvent(wheelEvt);
+  
+		this.setState({ zoom:  this.controls.getDistance() });  
 	}
 
 	setTFCMode = mode => {
