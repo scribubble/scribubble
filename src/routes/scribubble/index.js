@@ -144,7 +144,7 @@ class Scribubble extends Component {
 			this.controls.enabled = !e.value;
 		});
 
-		this.transformControls.addEventListener('change', (e) => {
+		this.transformControls.addEventListener('objectChange', (e) => {
 			let msg = '';
 			let data = {
 				bubbleName: this.bubbleName,
