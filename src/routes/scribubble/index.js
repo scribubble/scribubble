@@ -142,15 +142,28 @@ class Scribubble extends Component {
 
 		this.transformControls.addEventListener('change', (e) => {
 			// console.log(this.targetObj);
-			socket.emit('move obj', { 
-				bubbleName: this.bubbleName,
-				objName: this.targetObj.name, 
-				position: {
-					x: this.targetObj.position.x,
-					y: this.targetObj.position.y,
-					z: this.targetObj.position.z,
-				}
-			});
+			if(this.targetObj.type === 'Line2') {
+				socket.emit('move obj', { 
+					bubbleName: this.bubbleName,
+					objName: this.targetObj.name, 
+					tfcPosition: {
+						x: this.targetObj.parent.position.x,
+						y: this.targetObj.parent.position.y,
+						z: this.targetObj.parent.position.z,
+					}
+				});
+			} else {
+				socket.emit('move obj', { 
+					bubbleName: this.bubbleName,
+					objName: this.targetObj.name, 
+					position: {
+						x: this.targetObj.position.x,
+						y: this.targetObj.position.y,
+						z: this.targetObj.position.z,
+					}
+				});
+			}
+			
 		});
 		
 		const geometry = new THREE.BoxGeometry( 1, 1, 1 );
@@ -321,13 +334,14 @@ class Scribubble extends Component {
 				);
 
 				let curLine = getLastLine(line.drawer_id);
-				let obj = new THREE.Object3D();
-				obj.position.copy(tfcPos);
-
-				curLine.parent = obj;
-				curLine.position.copy(pos);
+				let emptyObj = new THREE.Object3D();
 				
-				this.objEntity.add(obj);
+				emptyObj.position.copy(tfcPos);
+				curLine.position.copy(pos);
+
+				curLine.parent = emptyObj;
+				
+				this.objEntity.add(curLine.parent);
 			}
 
 		// 		let curLine = getLastLine(this.user_id);
@@ -445,9 +459,9 @@ class Scribubble extends Component {
 			bubbleName: this.bubbleName,
 			user_id: this.user_id,
 			tfcPosition: {
-				x: obj.position.x,
-				y: obj.position.y,
-				z: obj.position.z
+				x: curLine.parent.position.x,
+				y: curLine.parent.position.y,
+				z: curLine.parent.position.z
 			},
 			position: {
 				x: curLine.position.x,
@@ -531,7 +545,7 @@ class Scribubble extends Component {
 		if (!this.transformControls.dragging && this.sphereInter.visible) {
 			this.targetObj = this.selectingObj;
 			this.transformControls.attach(
-				this.targetObj === 'Line2' ?
+				this.targetObj.type === 'Line2' ?
 					this.targetObj.parent:
 					this.targetObj
 			);
