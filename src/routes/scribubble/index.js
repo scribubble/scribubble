@@ -141,7 +141,7 @@ class Scribubble extends Component {
 		});
 
 		this.transformControls.addEventListener('change', (e) => {
-			console.log(this.targetObj);
+			// console.log(this.targetObj);
 			socket.emit('move obj', { 
 				bubbleName: this.bubbleName,
 				objName: this.targetObj.name, 
@@ -244,7 +244,7 @@ class Scribubble extends Component {
 		});
  
 		socket.on('draw start', (data) => {
-			console.log('draw start');
+			// console.log('draw start');
 			createLineAndAdd(data.user_id, {
 				width: data.linewidth,
 				color: data.color,
@@ -277,7 +277,7 @@ class Scribubble extends Component {
 		});
 
         socket.on('drawing', (data) => {
-			console.log('drawing');
+			// console.log('drawing');
 			addPosition(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z));
         });
 		
@@ -286,8 +286,8 @@ class Scribubble extends Component {
 		});
 
 		socket.on('get saved bubble', (data) => {
-			console.log(`get saved bubble ${data}`);
-			console.log(data.lines);
+			// console.log(`get saved bubble ${data}`);
+			// console.log(data.lines);
 
 			for(let i = 0; i < data.lines.length; i++) {
 				let line = data.lines[i];
@@ -356,13 +356,12 @@ class Scribubble extends Component {
 		});
 
 		socket.on("create shape", (data) => {
-			console.log('create s');
 			this.createShape(data.shape, {objName: data.objName, color: data.color, position: data.position});
 		});
 
 		socket.on('move obj', (data) => {
 			const target = this.objEntity.getObjectByName(data.objName);
-			console.log(target);
+			// console.log(target);
 			target.position.set(data.position.x, data.position.y, data.position.z); 
 		});
 	}
@@ -430,8 +429,6 @@ class Scribubble extends Component {
 		
 		let curLine = getLastLine(this.user_id);
 		let curPos = getCenterPos(curLine);
-		console.log(curLine);
-		console.log(curPos);
 		
 		let obj = new THREE.Object3D();
 		obj.position.copy(curPos);
@@ -442,8 +439,8 @@ class Scribubble extends Component {
 		this.objEntity.add(obj);
 
 		// this.transformControls.attach(obj);
-		console.log(curLine);
-		console.log(`draw stop ${this.bubbleName}`);
+
+		// console.log(`draw stop ${this.bubbleName}`);
 		socket.emit('draw stop', {
 			bubbleName: this.bubbleName,
 			user_id: this.user_id,
@@ -660,8 +657,6 @@ class Scribubble extends Component {
 				}
 			});
 		} else { // 타인이 그린 경우, 저장된 데이터로 그리는 경우
-			console.log(shapeAttribute);
-
 			const material = new THREE.MeshPhongMaterial( { color: shapeAttribute.color, shininess: 0 } );
 
 			let geometry, shapeObj;
