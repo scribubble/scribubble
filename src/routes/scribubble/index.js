@@ -309,6 +309,7 @@ class Scribubble extends Component {
 			const target = this.objEntity.getObjectByName(data.objName);
 			target.parent.position.copy(data.tfcPosition);
 			target.position.copy(data.position);
+			target.type = 'Line2';
 		});
 		
 		socket.on('remove current', (data) => {
@@ -577,13 +578,16 @@ class Scribubble extends Component {
 		// 오브젝트를 선택했다면 해당 오브젝트를 targetObj 로 변경
 		if (!this.transformControls.dragging && this.sphereInter.visible) {
 			this.targetObj = this.selectingObj;
-			this.transformControls.attach(
-				this.targetObj.type === 'Line2' ?
-					this.targetObj.parent:
-					this.targetObj
-			);
+			if (this.targetObj.type !== 'Line2Drawing') {
+				this.transformControls.attach(
+					this.targetObj.type === 'Line2' ?
+						this.targetObj.parent:
+						this.targetObj
+				);
+			}
 			this.setState({ drawingColor: '#' + this.targetObj.material.color.getHexString() });
 		}
+
 
 		// 그리기 모드일시 그리기 시작
 		if (!this.transformControls.dragging && this.state.mode === MODE.DRAWING)

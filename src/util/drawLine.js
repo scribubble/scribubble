@@ -103,6 +103,7 @@ export const addPosition = (user_id, point) => {
 
     getLastLine(user_id).geometry._maxInstanceCount = ++drawData[user_id].drawingCount;
     getLastLine(user_id).geometry.setPositions(drawData[user_id].linePositions);
+    getLastLine(user_id).type = 'Line2Drawing';
     getLastLine(user_id).computeLineDistances();
   }
 };
