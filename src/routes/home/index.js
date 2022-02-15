@@ -1,6 +1,6 @@
 import { Link } from "preact-router/match";
-import Nav from "../../components/Nav/Nav";
-import Bubble from "../../components/Bubble/Bubble";
+import Nav from "../../components/Nav";
+import Bubble from "../../components/Bubble";
 import styled from "styled-components";
 import { useEffect } from "preact/hooks";
 

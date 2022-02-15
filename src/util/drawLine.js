@@ -46,6 +46,8 @@ export const createLineGeometry = (user_id, point) => {
  * @param {Number} opt.width 라인 두께 (default 1)
  * @param {THREE.Color} opt.color 라인 색상 (default black)
  * @param {Boolean} opt.dashed dashed 모드 (default false)
+ * @param {THREE.Vector3} opt.position 라인 생성 기본 위치 (default 0, 0, 0)
+ * @param {string} opt.objName 라인 생성자 이름 (default unknown)
  */
 export const createLine = (opt) => {
   opt = opt || {};
@@ -53,6 +55,7 @@ export const createLine = (opt) => {
   opt.color = opt.color || new THREE.Color(0, 0, 0);
   opt.dashed = opt.dashed || false;
   opt.position = opt.position || new THREE.Vector3(0, 0, 0);
+  opt.objName = opt.objName || '(unknown)'
 
   var matLine = new LineMaterial({
     color: opt.color,
@@ -69,7 +72,6 @@ export const createLine = (opt) => {
   line.computeLineDistances();
   line.position.copy(opt.position);
   line.name = opt.objName;
-  console.log(line.position);
 
   return line;
 };
@@ -78,9 +80,6 @@ export const createLine = (opt) => {
  * Line 오브젝트 생성 후 scene 에 추가
  * @param {String} user_id 유저의 고유 id (socket_id)
  * @param {Object} opt 라인 옵션
- * @param {Number} opt.width 라인 두께 (default 1)
- * @param {THREE.Color} opt.color 라인 색상 (default black)
- * @param {Boolean} opt.dashed dashed 모드 (default false)
  * @param {THREE.Object3D} parent 라인의 부모
  */
 export const createLineAndAdd = (user_id, opt, parent) => {
@@ -101,8 +100,7 @@ export const createLineAndAdd = (user_id, opt, parent) => {
 export const addPosition = (user_id, point) => {
   drawData[user_id].linePositions.push(point.x, point.y, point.z);
 
-  getLastLine(user_id).geometry._maxInstanceCount = ++drawData[user_id]
-    .drawingCount;
+  getLastLine(user_id).geometry._maxInstanceCount = ++drawData[user_id].drawingCount;
   getLastLine(user_id).geometry.setPositions(drawData[user_id].linePositions);
   getLastLine(user_id).computeLineDistances();
 };
