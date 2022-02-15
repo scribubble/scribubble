@@ -36,6 +36,7 @@ import {
   RotateButton,
   ScaleButton,
 } from "../../components/Button";
+import { ProfileBlock, ProfileSM } from '../../components/Profile';
 import { ColorPicker, LengthInput, ZoomInput } from "../../components/Input";
 import { ColBar, DivisionLine, RowBottomBar } from "../../components/Bar";
 
@@ -76,7 +77,8 @@ class Scribubble extends Component {
 		lineDashed: false,
 		pallete: [],
 		zoom: 1,
-		tfcMode: 'translate'
+		tfcMode: 'translate',
+		userList: []
 	};
 
 	constructor() {
@@ -417,6 +419,21 @@ class Scribubble extends Component {
 				target.rotation.set(data.rotation.x, data.rotation.y, data.rotation.z);
 			}
 		});
+
+		socket.on('user enter', (data) => {
+			this.setState({ userList: [ ...this.state.userList, {
+				user_id: data.user_id,
+				user_nickname: data.user_nickname
+			}]});
+		});
+		socket.on('user list', (data) => {
+			this.setState({ userList: [ ...this.state.userList, ...data.userList]});
+		})
+		socket.on('user exit', (data) => {
+			this.setState({
+				userList: this.state.userList.filter(user => user.user_id != data.user_id)
+			});
+		});
 	}
 
 	removeSocketListener = () => {
@@ -440,6 +457,9 @@ class Scribubble extends Component {
 		socket.off('delete obj');
 		socket.off('remove current');
 		socket.off('get saved bubble');
+		socket.off('user enter');
+		socket.off('user list');
+		socket.off('user exit');
 		
 		socket.close();
 	}
@@ -752,6 +772,17 @@ class Scribubble extends Component {
 		<div id="Scribubble" ref={el => this.element = el} >
 			<div class={style.rightSide}>
 				<div class={style.rightSideUI}>
+					<div style="display: flex;">
+						<ProfileBlock>
+							{
+								this.state.userList.map(user => {
+									return <ProfileSM>{user.user_nickname}</ProfileSM>
+								})
+							}
+						</ProfileBlock>
+						<TextButton onClick={() => { this.setState((prev) => ({ openPanel: !prev.openPanel })) }}>
+						</TextButton>
+					</div>
 					{/* <TextButton onClick={() => { this.setState((prev) => ({ openPanel: !prev.openPanel })) }}>
 					</TextButton> */}
 					<RowBottomBar>
