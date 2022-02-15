@@ -426,6 +426,13 @@ class Scribubble extends Component {
 			});
 		});
 
+		socket.on('change obj color', (data) => {
+			// console.log(data);
+			const target = this.objEntity.getObjectByName(data.objName);
+			// console.log(target);
+			target.material.color = new THREE.Color(data.color);
+		});
+
 		socket.on('move obj', (data) => {
 			// console.log(data);
 			const target = this.objEntity.getObjectByName(data.objName);
@@ -481,11 +488,15 @@ class Scribubble extends Component {
 		socket.off('draw start');
 		socket.off('drawing');
 		socket.off('draw stop');
-		socket.off('move line');
+		socket.off('create shape');
+		socket.off('change obj color');
+		socket.off('move obj');
+		socket.off('rotate obj');
+		socket.off('scale obj');
+		socket.off('delete obj');
 		socket.off('remove current');
 		socket.off('get saved bubble');
-		socket.off('remove line');
-		socket.off('create shape');
+		
 		socket.close();
 	}
 
@@ -641,6 +652,7 @@ class Scribubble extends Component {
 		if (!this.transformControls.dragging && this.state.mode === MODE.DRAWING)
 			this.drawStart();
 	}
+
 	mouseMove = (event) => {
 		// mosePos 위치 갱신
 		refreshMousePosition(event, this.camera, this.scene.position, this.raycaster, this.mousePos);
@@ -866,6 +878,12 @@ class Scribubble extends Component {
 							this.setState({ drawingColor: e.target.value });
 							if (this.targetObj) {
 								this.targetObj.material.color = new THREE.Color(e.target.value);
+								socket.emit('change obj color', {
+									bubbleName: this.bubbleName,
+									objName: this.targetObj.name, 
+									objType: this.targetObj.type,
+									color: e.target.value,
+								});
 							}
 						}}
 					></ColorPicker>
