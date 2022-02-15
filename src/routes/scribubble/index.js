@@ -115,20 +115,17 @@ class Scribubble extends Component {
 		this.controls = new OrbitControls(this.camera, this.renderer.domElement);
 		
 		document.addEventListener('mousewheel', (e) => {
-			console.log(this.controls.getDistance());
-			
 			this.setState({ zoom:  this.controls.getDistance() });
 		})
-		this.controls.addEventListener('change', (e) => {
-			console.log('AA', this.camera.position.z);
-		})
+		// this.controls.addEventListener('change', (e) => {
+		// 	console.log('AA', this.camera.position.z);
+		// })
 		
 		this.controls.maxDistance = 10;
 
 		// 다른 오브젝트들의 부모가 될 상위 오브젝트 (line 및 도형 등 선택이 가능한 오브젝트들의 부모)
 		this.objEntity = new THREE.Object3D();
 		this.scene.add(this.objEntity);
-		console.log('@@@@@@@@', this.controls.getDistance());
 
 		// 선택모드 시 선택될 수 있는 오브젝트 위치를 보여줄 오브젝트
 		const sphGeometry = new THREE.SphereGeometry( 0.1 );
@@ -267,7 +264,6 @@ class Scribubble extends Component {
 		socket.on('user_id', (data) => {
 			this.user_id = data.user_id;
 			this.user_nickname = data.user_nickname;
-			console.log(this.user_nickname);
 		});
  
 		socket.on('draw start', (data) => {
@@ -278,7 +274,7 @@ class Scribubble extends Component {
 				objName: data.objName,
 				geo: createLineGeometry(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z))
 			}, this.objEntity);
-				
+
 			if (!this.nameTag[data.user_id]) {
 				const nametagText = new TextSprite({
 					text: data.user_nickname,
@@ -288,12 +284,11 @@ class Scribubble extends Component {
 					backgroundColor: theme.surface,
 				});
 				
-				nametagText.scale.set(0.02, 0.02, 0.02);
-				// const nametag = new THREE.Object3D();
-				// nametag.add(nametagText);
-				// nametag.scale.set(0.02, 0.02, 0.02);
-				this.nameTag[data.user_id] = nametagText;
+				const nametag = new THREE.Object3D();
+				nametag.add(nametagText);
+				nametag.scale.set(0.02, 0.02, 0.02);
 
+				this.nameTag[data.user_id] = nametag;
 				this.scene.add(this.nameTag[data.user_id]);
 			}
 			this.nameTag[data.user_id].position.copy(data.mousePos);
@@ -396,13 +391,9 @@ class Scribubble extends Component {
 			const target = this.objEntity.getObjectByName(data.objName);
 
 			if (target.type === 'Line2') {
-				target.parent.scale.x = data.scale.x;
-				target.parent.scale.y = data.scale.y;
-				target.parent.scale.z = data.scale.z;
+				target.parent.scale.set(data.scale.x, data.scale.y, data.scale.z);
 			} else {
-				target.scale.x = data.scale.x;
-				target.scale.y = data.scale.y;
-				target.scale.z = data.scale.z;
+				target.scale.set(data.scale.x, data.scale.y, data.scale.z);
 			}
 		});
 
@@ -411,13 +402,9 @@ class Scribubble extends Component {
 			const target = this.objEntity.getObjectByName(data.objName);
 			
 			if (target.type === 'Line2') {
-				target.parent.rotation.x = data.rotation.x;
-				target.parent.rotation.y = data.rotation.y;
-				target.parent.rotation.z = data.rotation.z;
+				target.parent.rotation.set(data.rotation.x, data.rotation.y, data.rotation.z);
 			} else {
-				target.rotation.x = data.rotation.x;
-				target.rotation.y = data.rotation.y;
-				target.rotation.z = data.rotation.z;
+				target.rotation.set(data.rotation.x, data.rotation.y, data.rotation.z);
 			}
 		});
 	}
@@ -471,6 +458,7 @@ class Scribubble extends Component {
 		socket.emit('draw start', {
 			bubbleName: this.bubbleName,
 			user_id: this.user_id,
+			user_nickname: this.user_nickname,
 			linewidth: this.state.linewidth,
 			color: this.state.drawingColor,
 			dashed: this.state.lineDashed,
@@ -696,21 +684,9 @@ class Scribubble extends Component {
 				shape: shape, 
 				color: this.state.drawingColor,
 				objName: newObjName, 
-				position: {
-					x: shapeObj.position.x,
-					y: shapeObj.position.y,
-					z: shapeObj.position.z
-				},
-				rotation: {
-					x: shapeObj.rotation.x,
-					y: shapeObj.rotation.y,
-					z: shapeObj.rotation.z
-				},
-				scale: {
-					x: shapeObj.scale.x,
-					y: shapeObj.scale.y,
-					z: shapeObj.scale.z
-				}
+				position: getBasisPosition(shapeObj.position),
+				rotation: getBasisPosition(shapeObj.rotation),
+				scale: getBasisPosition(shapeObj.scale)
 			});
 		} else { // 타인이 그린 경우, 저장된 데이터로 그리는 경우
 			const material = new THREE.MeshPhongMaterial( { color: shapeAttribute.color, shininess: 0 } );
@@ -734,14 +710,10 @@ class Scribubble extends Component {
 			shapeObj.position.copy(new THREE.Vector3(pos.x, pos.y, pos.z));
 
 			const scale = shapeAttribute.scale;
-			shapeObj.scale.x = scale.x;
-			shapeObj.scale.y = scale.y;
-			shapeObj.scale.z =  scale.z;
+			shapeObj.scale.set(scale.x, scale.y, scale,z);
 
 			const rotation = shapeAttribute.rotation;
-			shapeObj.rotation.x = rotation.x;
-			shapeObj.rotation.y = rotation.y;
-			shapeObj.rotation.z =  rotation.z;
+			shapeObj.rotation.set(rotation.x, rotation.y, rotation.z);
 
 			shapeObj.name = shapeAttribute.objName;
 
