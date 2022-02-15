@@ -91,6 +91,11 @@ class Scribubble extends Component {
 		this.initListener();
 		
 		this.initSocketListener();
+
+		// 데이터 24시간 유지 안내
+		// setTimeout(() => { 
+		// 	alert('This site is available for 24hour');
+		// }, 1000);
 	}
 
 	componentWillUnmount() {
@@ -354,6 +359,11 @@ class Scribubble extends Component {
 					scale: item.scale
 				});
 			}
+
+			socket.on('drawing', (data) => {
+				// console.log('drawing');
+				addPosition(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z));
+			});
 		});
 
 		socket.on("delete obj", (data) => {
@@ -620,6 +630,8 @@ class Scribubble extends Component {
 		if (this.isDrawing) {
 			// addPosition(user_id, mousePos);
 			socket.emit('drawing', {
+				bubbleName: this.bubbleName,
+				objName: getLastLine(this.user_id).name,
 				user_id: this.user_id,
 				mousePos: getBasisPosition(this.mousePos)
 			});
@@ -771,15 +783,17 @@ class Scribubble extends Component {
 						<TextButton onClick={() => { this.setState((prev) => ({ openPanel: !prev.openPanel })) }}>
 						</TextButton>
 					</div>
+					{/* <TextButton onClick={() => { this.setState((prev) => ({ openPanel: !prev.openPanel })) }}>
+					</TextButton> */}
 					<RowBottomBar>
 						<MinusButton onClick={() => this.zoomControl(-0.01)}></MinusButton>
 						<ZoomInput value={this.state.zoom} min={0} max={10} step={0.01}></ZoomInput>
 						<PlusButton onClick={() => this.zoomControl(0.01)}></PlusButton>
 					</RowBottomBar>
 				</div>
-				{
+				{/* {
 					this.state.openPanel && <RightPanel></RightPanel>
-				}
+				} */}
 			</div>
 			<div class={style.leftSide}>
 				<ColBar>
