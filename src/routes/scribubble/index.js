@@ -340,6 +340,7 @@ class Scribubble extends Component {
 			// console.log(`get saved bubble ${data}`);
 			// console.log(data.lines);
 
+			// 라인
 			for(let i = 0; i < data.lines.length; i++) {
 				let line = data.lines[i];
 				// console.log(';', line);
@@ -371,29 +372,26 @@ class Scribubble extends Component {
 					line.tfcPosition.z,
 				);
 
+				let tfcScale = new THREE.Vector3(
+					line.tfcScale.x,
+					line.tfcScale.y,
+					line.tfcScale.z,
+				);
+
 				let curLine = getLastLine(line.drawer_id);
 				
-				curLine.parent.position.copy(tfcPos);
 				curLine.position.copy(pos);
+				curLine.parent.position.copy(tfcPos);
+				
+				curLine.parent.scale.x = tfcScale.x;
+				curLine.parent.scale.y = tfcScale.y;
+				curLine.parent.scale.z = tfcScale.z;
 			}
 
-		// 		let curLine = getLastLine(this.user_id);
-		// let curPos = getCenterPos(curLine);
-		
-		// let obj = new THREE.Object3D();
-		// obj.position.copy(curPos);
-
-		// curLine.parent = obj;
-		// curLine.position.copy(curPos.negate());
-		
-		// this.objEntity.add(obj);
-
-		// this.transformControls.attach(obj);
-
-
+			// 도형
 			for(let i = 0; i < data.shapes.length; i++) {
 				let item = data.shapes[i];
-				this.createShape(item.shape, {objName: item.objName, color: item.color, position: item.position});
+				this.createShape(item.shape, {objName: item.objName, color: item.color, position: item.position, scale: item.scale});
 			}
 		});
 
@@ -407,13 +405,28 @@ class Scribubble extends Component {
 		});
 
 		socket.on('move obj', (data) => {
-			console.log(data);
+			// console.log(data);
 			const target = this.objEntity.getObjectByName(data.objName);
 			// console.log(target);
 			if(data.tfcPosition) {
 				target.parent.position.set(data.tfcPosition.x, data.tfcPosition.y, data.tfcPosition.z); 
 			} else {
 				target.position.set(data.position.x, data.position.y, data.position.z); 
+			}
+		});
+
+		socket.on('scale obj', (data) => {
+			// console.log(data);
+			const target = this.objEntity.getObjectByName(data.objName);
+
+			if (target.type === 'Line2') {
+				target.parent.scale.x = data.scale.x;
+				target.parent.scale.y = data.scale.y;
+				target.parent.scale.z = data.scale.z;
+			} else {
+				target.scale.x = data.scale.x;
+				target.scale.y = data.scale.y;
+				target.scale.z = data.scale.z;
 			}
 		});
 	}
@@ -725,6 +738,8 @@ class Scribubble extends Component {
 
 			const pos = shapeAttribute.position;
 			shapeObj.position.copy(new THREE.Vector3(pos.x, pos.y, pos.z));
+			const scale = shapeAttribute.scale;
+			shapeObj.scale.copy(new THREE.Vector3(scale.x, scale.y, scale.z));
 
 			shapeObj.name = shapeAttribute.objName;
 
