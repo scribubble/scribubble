@@ -372,6 +372,12 @@ class Scribubble extends Component {
 					line.tfcPosition.z,
 				);
 
+				let tfcRotation = new THREE.Vector3(
+					line.tfcRotation.x,
+					line.tfcRotation.y,
+					line.tfcRotation.z,
+				);
+
 				let tfcScale = new THREE.Vector3(
 					line.tfcScale.x,
 					line.tfcScale.y,
@@ -382,7 +388,11 @@ class Scribubble extends Component {
 				
 				curLine.position.copy(pos);
 				curLine.parent.position.copy(tfcPos);
-				
+
+				curLine.parent.rotation.x = tfcRotation.x;
+				curLine.parent.rotation.y = tfcRotation.y;
+				curLine.parent.rotation.z = tfcRotation.z;
+
 				curLine.parent.scale.x = tfcScale.x;
 				curLine.parent.scale.y = tfcScale.y;
 				curLine.parent.scale.z = tfcScale.z;
@@ -391,7 +401,13 @@ class Scribubble extends Component {
 			// 도형
 			for(let i = 0; i < data.shapes.length; i++) {
 				let item = data.shapes[i];
-				this.createShape(item.shape, {objName: item.objName, color: item.color, position: item.position, scale: item.scale});
+				this.createShape(item.shape, {
+					objName: item.objName, 
+					color: item.color, 
+					position: item.position, 
+					rotation: item.rotation, 
+					scale: item.scale
+				});
 			}
 		});
 
@@ -401,7 +417,13 @@ class Scribubble extends Component {
 		});
 
 		socket.on("create shape", (data) => {
-			this.createShape(data.shape, {objName: data.objName, color: data.color, position: data.position, scale: data.scale});
+			this.createShape(data.shape, {
+				objName: data.objName, 
+				color: data.color, 
+				position: data.position, 
+				rotation: data.rotation,
+				scale: data.scale
+			});
 		});
 
 		socket.on('move obj', (data) => {
@@ -433,15 +455,15 @@ class Scribubble extends Component {
 		socket.on('rotate obj', (data) => {
 			// console.log(data);
 			const target = this.objEntity.getObjectByName(data.objName);
-
+			
 			if (target.type === 'Line2') {
-				target.parent.ratation.x = data.ratation.x;
-				target.parent.ratation.y = data.ratation.y;
-				target.parent.ratation.z = data.ratation.z;
+				target.parent.rotation.x = data.rotation.x;
+				target.parent.rotation.y = data.rotation.y;
+				target.parent.rotation.z = data.rotation.z;
 			} else {
-				target.ratation.x = data.ratation.x;
-				target.ratation.y = data.ratation.y;
-				target.ratation.z = data.ratation.z;
+				target.rotation.x = data.rotation.x;
+				target.rotation.y = data.rotation.y;
+				target.rotation.z = data.rotation.z;
 			}
 		});
 	}
@@ -732,6 +754,11 @@ class Scribubble extends Component {
 					y: shapeObj.position.y,
 					z: shapeObj.position.z
 				},
+				rotation: {
+					x: shapeObj.rotation.x,
+					y: shapeObj.rotation.y,
+					z: shapeObj.rotation.z
+				},
 				scale: {
 					x: shapeObj.scale.x,
 					y: shapeObj.scale.y,
@@ -763,6 +790,11 @@ class Scribubble extends Component {
 			shapeObj.scale.x = scale.x;
 			shapeObj.scale.y = scale.y;
 			shapeObj.scale.z =  scale.z;
+
+			const rotation = shapeAttribute.rotation;
+			shapeObj.rotation.x = rotation.x;
+			shapeObj.rotation.y = rotation.y;
+			shapeObj.rotation.z =  rotation.z;
 
 			shapeObj.name = shapeAttribute.objName;
 
