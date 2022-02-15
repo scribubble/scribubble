@@ -740,17 +740,17 @@ class Scribubble extends Component {
 		<div id="Scribubble" ref={el => this.element = el} >
 			<div class={style.rightSide}>
 				<div class={style.rightSideUI}>
-					<TextButton onClick={() => { this.setState((prev) => ({ openPanel: !prev.openPanel })) }}>
-					</TextButton>
+					{/* <TextButton onClick={() => { this.setState((prev) => ({ openPanel: !prev.openPanel })) }}>
+					</TextButton> */}
 					<RowBottomBar>
 						<MinusButton onClick={() => this.zoomControl(-0.01)}></MinusButton>
 						<ZoomInput value={this.state.zoom} min={0} max={10} step={0.01}></ZoomInput>
 						<PlusButton onClick={() => this.zoomControl(0.01)}></PlusButton>
 					</RowBottomBar>
 				</div>
-				{
+				{/* {
 					this.state.openPanel && <RightPanel></RightPanel>
-				}
+				} */}
 			</div>
 			<div class={style.leftSide}>
 				<ColBar>

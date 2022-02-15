@@ -18,8 +18,11 @@ export const RowBar = styled(Bar)`
     flex-direction: row;
 `;
 export const RowBottomBar = styled(RowBar)`
-    margin-right: 0.5rem;
-    margin-bottom: 0.5rem;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    margin-right: 1rem;
+    margin-bottom: 1rem;
 `;
 
 export const DivisionLine = styled.div`

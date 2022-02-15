@@ -16,6 +16,7 @@
     align-items: flex-start;
 }
 .rightSideUI {
+    position: relative;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
