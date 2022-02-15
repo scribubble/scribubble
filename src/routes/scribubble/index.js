@@ -44,7 +44,8 @@ import io, { connect } from "socket.io-client";
 import style from "./style.css";
 import theme from "../../style/theme"
 
-const server_host = ":4000";
+const server_host = ":4000"; // 로컬
+// const server_host = process.env.SERVER_URL; // 배포
 // https 로 테스트할때
 // const server_host = "";
 
@@ -318,6 +319,7 @@ class Scribubble extends Component {
 			// console.log(`get saved bubble ${data}`);
 			// console.log(data.lines);
 
+			// 라인
 			for(let i = 0; i < data.lines.length; i++) {
 				let line = data.lines[i];
 				// console.log(';', line);
@@ -336,29 +338,24 @@ class Scribubble extends Component {
 				for(let j = 1; j < linePos.length; j++) {
 					addPosition(line.drawer_id, new THREE.Vector3(linePos[j].x, linePos[j].y, linePos[j].z));
 				}
-
 				let curLine = getLastLine(line.drawer_id);
+				
 				curLine.parent.position.set(line.tfcPosition.x, line.tfcPosition.y, line.tfcPosition.z);
 				curLine.position.set(line.position.x, line.position.y, line.position.z);
+				curLine.parent.rotation.set(line.tfcRotation.x, line.tfcRotation.y, line.tfcRotation.z);
+				curLine.parent.scale.set(line.tfcScale.x, line.tfcScale.y, line.tfcScale.z);
 			}
 
-		// 		let curLine = getLastLine(this.user_id);
-		// let curPos = getCenterPos(curLine);
-		
-		// let obj = new THREE.Object3D();
-		// obj.position.copy(curPos);
-
-		// curLine.parent = obj;
-		// curLine.position.copy(curPos.negate());
-		
-		// this.objEntity.add(obj);
-
-		// this.transformControls.attach(obj);
-
-
+			// 도형
 			for(let i = 0; i < data.shapes.length; i++) {
 				let item = data.shapes[i];
-				this.createShape(item.shape, {objName: item.objName, color: item.color, position: item.position});
+				this.createShape(item.shape, {
+					objName: item.objName, 
+					color: item.color, 
+					position: item.position, 
+					rotation: item.rotation, 
+					scale: item.scale
+				});
 			}
 		});
 
@@ -368,7 +365,20 @@ class Scribubble extends Component {
 		});
 
 		socket.on("create shape", (data) => {
-			this.createShape(data.shape, {objName: data.objName, color: data.color, position: data.position});
+			this.createShape(data.shape, {
+				objName: data.objName, 
+				color: data.color, 
+				position: data.position, 
+				rotation: data.rotation,
+				scale: data.scale
+			});
+		});
+
+		socket.on('change obj color', (data) => {
+			// console.log(data);
+			const target = this.objEntity.getObjectByName(data.objName);
+			// console.log(target);
+			target.material.color = new THREE.Color(data.color);
 		});
 
 		socket.on('move obj', (data) => {
@@ -378,6 +388,36 @@ class Scribubble extends Component {
 				target.parent.position.set(data.tfcPosition.x, data.tfcPosition.y, data.tfcPosition.z); 
 			} else {
 				target.position.set(data.position.x, data.position.y, data.position.z); 
+			}
+		});
+
+		socket.on('scale obj', (data) => {
+			// console.log(data);
+			const target = this.objEntity.getObjectByName(data.objName);
+
+			if (target.type === 'Line2') {
+				target.parent.scale.x = data.scale.x;
+				target.parent.scale.y = data.scale.y;
+				target.parent.scale.z = data.scale.z;
+			} else {
+				target.scale.x = data.scale.x;
+				target.scale.y = data.scale.y;
+				target.scale.z = data.scale.z;
+			}
+		});
+
+		socket.on('rotate obj', (data) => {
+			// console.log(data);
+			const target = this.objEntity.getObjectByName(data.objName);
+			
+			if (target.type === 'Line2') {
+				target.parent.rotation.x = data.rotation.x;
+				target.parent.rotation.y = data.rotation.y;
+				target.parent.rotation.z = data.rotation.z;
+			} else {
+				target.rotation.x = data.rotation.x;
+				target.rotation.y = data.rotation.y;
+				target.rotation.z = data.rotation.z;
 			}
 		});
 	}
@@ -395,11 +435,15 @@ class Scribubble extends Component {
 		socket.off('draw start');
 		socket.off('drawing');
 		socket.off('draw stop');
-		socket.off('move line');
+		socket.off('create shape');
+		socket.off('change obj color');
+		socket.off('move obj');
+		socket.off('rotate obj');
+		socket.off('scale obj');
+		socket.off('delete obj');
 		socket.off('remove current');
 		socket.off('get saved bubble');
-		socket.off('remove line');
-		socket.off('create shape');
+		
 		socket.close();
 	}
 
@@ -547,6 +591,7 @@ class Scribubble extends Component {
 		if (!this.transformControls.dragging && this.state.mode === MODE.DRAWING)
 			this.drawStart();
 	}
+
 	mouseMove = (event) => {
 		// mosePos 위치 갱신
 		refreshMousePosition(event, this.camera, this.scene.position, this.raycaster, this.mousePos);
@@ -655,6 +700,16 @@ class Scribubble extends Component {
 					x: shapeObj.position.x,
 					y: shapeObj.position.y,
 					z: shapeObj.position.z
+				},
+				rotation: {
+					x: shapeObj.rotation.x,
+					y: shapeObj.rotation.y,
+					z: shapeObj.rotation.z
+				},
+				scale: {
+					x: shapeObj.scale.x,
+					y: shapeObj.scale.y,
+					z: shapeObj.scale.z
 				}
 			});
 		} else { // 타인이 그린 경우, 저장된 데이터로 그리는 경우
@@ -677,6 +732,16 @@ class Scribubble extends Component {
 
 			const pos = shapeAttribute.position;
 			shapeObj.position.copy(new THREE.Vector3(pos.x, pos.y, pos.z));
+
+			const scale = shapeAttribute.scale;
+			shapeObj.scale.x = scale.x;
+			shapeObj.scale.y = scale.y;
+			shapeObj.scale.z =  scale.z;
+
+			const rotation = shapeAttribute.rotation;
+			shapeObj.rotation.x = rotation.x;
+			shapeObj.rotation.y = rotation.y;
+			shapeObj.rotation.z =  rotation.z;
 
 			shapeObj.name = shapeAttribute.objName;
 
@@ -748,6 +813,12 @@ class Scribubble extends Component {
 							this.setState({ drawingColor: e.target.value });
 							if (this.targetObj) {
 								this.targetObj.material.color = new THREE.Color(e.target.value);
+								socket.emit('change obj color', {
+									bubbleName: this.bubbleName,
+									objName: this.targetObj.name, 
+									objType: this.targetObj.type,
+									color: e.target.value,
+								});
 							}
 						}}
 					></ColorPicker>
