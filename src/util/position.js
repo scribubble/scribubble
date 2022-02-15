@@ -40,3 +40,16 @@ export const getCenterPosition = (camera, scenePosition, raycaster) => {
 
     return centerPos;
 }
+
+/**
+ * 순수 x, y, z 데이터만 받기
+ * @param vec3Pos THREE.Vector3 데이터
+ * @return x, y, z 데이터
+ */
+export const getBasisPosition = (vec3Pos) => {
+    return {
+        x: vec3Pos.x,
+        y: vec3Pos.y,
+        z: vec3Pos.z,
+    }
+}

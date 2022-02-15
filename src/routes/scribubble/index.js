@@ -13,7 +13,7 @@ import {
   getLastLine,
   getCenterPos,
 } from "../../util/drawLine";
-import { refreshMousePosition, getCenterPosition } from "../../util/position";
+import { refreshMousePosition, getCenterPosition, getBasisPosition } from "../../util/position";
 
 import RightPanel from "../../components/panel/RightPanel";
 import {
@@ -155,47 +155,23 @@ class Scribubble extends Component {
 			if (this.transformControls.mode === 'translate') {
 				msg = 'move obj';
 				if (this.targetObj.type === 'Line2') {
-					data.tfcPosition = {
-						x: this.targetObj.parent.position.x,
-						y: this.targetObj.parent.position.y,
-						z: this.targetObj.parent.position.z,
-					};
+					data.tfcPosition = getBasisPosition(this.targetObj.parent.position);
 				} else {
-					data.position = {
-						x: this.targetObj.position.x,
-						y: this.targetObj.position.y,
-						z: this.targetObj.position.z,
-					};
+					data.position = getBasisPosition(this.targetObj.position);
 				}
 			} else if (this.transformControls.mode === 'rotate') {
 				msg = 'rotate obj';
 				if (this.targetObj.type === 'Line2') {
-					data.rotation = {
-						x: this.targetObj.parent.rotation.x,
-						y: this.targetObj.parent.rotation.y,
-						z: this.targetObj.parent.rotation.z,
-					};
+					data.rotation = getBasisPosition(this.targetObj.parent.rotation);
 				} else {
-					data.rotation = {
-						x: this.targetObj.rotation.x,
-						y: this.targetObj.rotation.y,
-						z: this.targetObj.rotation.z,
-					}
+					data.rotation = getBasisPosition(this.targetObj.rotation);
 				}
 			} else if (this.transformControls.mode === 'scale') {
 				msg = 'scale obj';
 				if (this.targetObj.type === 'Line2') {
-					data.scale = {
-						x: this.targetObj.parent.scale.x,
-						y: this.targetObj.parent.scale.y,
-						z: this.targetObj.parent.scale.z,
-					};
+					data.scale = getBasisPosition(this.targetObj.parent.scale);
 				} else {
-					data.scale = {
-						x: this.targetObj.scale.x,
-						y: this.targetObj.scale.y,
-						z: this.targetObj.scale.z,
-					}
+					data.scale = getBasisPosition(this.targetObj.scale);
 				}
 			}
 			socket.emit(msg, data);
@@ -249,7 +225,8 @@ class Scribubble extends Component {
 		this.keysPressed = {};		// 키 다중 입력 처리용
 
 		// 유저 고유 id
-		this.user_id = 'aaa';
+		this.user_id = '(unknown)';
+		this.user_nickname = '(unknown)';
 
 		// 참여한 버블 이름
 		this.bubbleName = 'room1';
@@ -288,11 +265,12 @@ class Scribubble extends Component {
 		socket.emit('enter bubble', currentBubble);
 
 		socket.on('user_id', (data) => {
-				this.user_id = data.user_id;
+			this.user_id = data.user_id;
+			this.user_nickname = data.user_nickname;
+			console.log(this.user_nickname);
 		});
  
 		socket.on('draw start', (data) => {
-			// console.log('draw start');
 			createLineAndAdd(data.user_id, {
 				width: data.linewidth,
 				color: data.color,
@@ -303,17 +281,18 @@ class Scribubble extends Component {
 				
 			if (!this.nameTag[data.user_id]) {
 				const nametagText = new TextSprite({
-					text: data.user_id,
+					text: data.user_nickname,
 					fontFamily: 'Arial, Helvetica, sans-serif',
 					fontSize: 1,
 					color: theme.primary,
 					backgroundColor: theme.surface,
 				});
 				
-				const nametag = new THREE.Object3D();
-				nametag.add(nametagText);
-				nametag.scale.set(0.02, 0.02, 0.02);
-				this.nameTag[data.user_id] = nametag;
+				nametagText.scale.set(0.02, 0.02, 0.02);
+				// const nametag = new THREE.Object3D();
+				// nametag.add(nametagText);
+				// nametag.scale.set(0.02, 0.02, 0.02);
+				this.nameTag[data.user_id] = nametagText;
 
 				this.scene.add(this.nameTag[data.user_id]);
 			}
@@ -359,43 +338,12 @@ class Scribubble extends Component {
 				for(let j = 1; j < linePos.length; j++) {
 					addPosition(line.drawer_id, new THREE.Vector3(linePos[j].x, linePos[j].y, linePos[j].z));
 				}
-
-				let pos = new THREE.Vector3(
-					line.position.x,
-					line.position.y,
-					line.position.z,
-				);
-
-				let tfcPos = new THREE.Vector3(
-					line.tfcPosition.x,
-					line.tfcPosition.y,
-					line.tfcPosition.z,
-				);
-
-				let tfcRotation = new THREE.Vector3(
-					line.tfcRotation.x,
-					line.tfcRotation.y,
-					line.tfcRotation.z,
-				);
-
-				let tfcScale = new THREE.Vector3(
-					line.tfcScale.x,
-					line.tfcScale.y,
-					line.tfcScale.z,
-				);
-
 				let curLine = getLastLine(line.drawer_id);
 				
-				curLine.position.copy(pos);
-				curLine.parent.position.copy(tfcPos);
-
-				curLine.parent.rotation.x = tfcRotation.x;
-				curLine.parent.rotation.y = tfcRotation.y;
-				curLine.parent.rotation.z = tfcRotation.z;
-
-				curLine.parent.scale.x = tfcScale.x;
-				curLine.parent.scale.y = tfcScale.y;
-				curLine.parent.scale.z = tfcScale.z;
+				curLine.parent.position.set(line.tfcPosition.x, line.tfcPosition.y, line.tfcPosition.z);
+				curLine.position.set(line.position.x, line.position.y, line.position.z);
+				curLine.parent.rotation.set(line.tfcRotation.x, line.tfcRotation.y, line.tfcRotation.z);
+				curLine.parent.scale.set(line.tfcScale.x, line.tfcScale.y, line.tfcScale.z);
 			}
 
 			// 도형
@@ -434,7 +382,6 @@ class Scribubble extends Component {
 		});
 
 		socket.on('move obj', (data) => {
-			// console.log(data);
 			const target = this.objEntity.getObjectByName(data.objName);
 			// console.log(target);
 			if(data.tfcPosition) {
@@ -528,11 +475,7 @@ class Scribubble extends Component {
 			color: this.state.drawingColor,
 			dashed: this.state.lineDashed,
 			objName: this.user_id + this.objIdx,
-			mousePos: {
-				x: this.mousePos.x,
-				y: this.mousePos.y,
-				z: this.mousePos.z,
-			}
+			mousePos: getBasisPosition(this.mousePos)
 		});
 
 		this.objIdx++;
@@ -553,11 +496,7 @@ class Scribubble extends Component {
 			bubbleName: this.bubbleName,
 			user_id: this.user_id,
 			objName: curLine.name,
-			tfcPosition: {
-				x: curPos.x,
-				y: curPos.y,
-				z: curPos.z
-			},
+			tfcPosition: getBasisPosition(curPos),
 			position: {
 				x: -curPos.x,
 				y: -curPos.y,
@@ -674,11 +613,7 @@ class Scribubble extends Component {
 			// addPosition(user_id, mousePos);
 			socket.emit('drawing', {
 				user_id: this.user_id,
-				mousePos: {
-					x: this.mousePos.x,
-					y: this.mousePos.y,
-					z: this.mousePos.z,
-				}
+				mousePos: getBasisPosition(this.mousePos)
 			});
 		}
 	}
@@ -931,7 +866,7 @@ class Scribubble extends Component {
 							step="0.5" min="1" max="10"
 						></LengthInput>
 				</ColBar>
-        }
+        		}
 				{
 					this.state.mode === MODE.SHAPE &&
 					<ColBar>
