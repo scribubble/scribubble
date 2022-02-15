@@ -98,11 +98,13 @@ export const createLineAndAdd = (user_id, opt, parent) => {
  */
 
 export const addPosition = (user_id, point) => {
-  drawData[user_id].linePositions.push(point.x, point.y, point.z);
+  if(drawData[user_id]) {
+    drawData[user_id].linePositions.push(point.x, point.y, point.z);
 
-  getLastLine(user_id).geometry._maxInstanceCount = ++drawData[user_id].drawingCount;
-  getLastLine(user_id).geometry.setPositions(drawData[user_id].linePositions);
-  getLastLine(user_id).computeLineDistances();
+    getLastLine(user_id).geometry._maxInstanceCount = ++drawData[user_id].drawingCount;
+    getLastLine(user_id).geometry.setPositions(drawData[user_id].linePositions);
+    getLastLine(user_id).computeLineDistances();
+  }
 };
 
 /**
