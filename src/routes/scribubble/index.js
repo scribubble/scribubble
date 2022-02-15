@@ -44,7 +44,8 @@ import io, { connect } from "socket.io-client";
 import style from "./style.css";
 import theme from "../../style/theme"
 
-const server_host = ":4000";
+const server_host = ":4000"; // 로컬
+// const server_host = process.env.SERVER_URL; // 배포
 // https 로 테스트할때
 // const server_host = "";
 
