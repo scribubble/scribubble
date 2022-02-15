@@ -69,7 +69,6 @@ export const createLine = (opt) => {
   line.computeLineDistances();
   line.position.copy(opt.position);
   line.name = opt.objName;
-  console.log(line.position);
 
   return line;
 };
