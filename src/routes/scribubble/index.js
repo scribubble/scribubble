@@ -401,7 +401,7 @@ class Scribubble extends Component {
 		});
 
 		socket.on("create shape", (data) => {
-			this.createShape(data.shape, {objName: data.objName, color: data.color, position: data.position});
+			this.createShape(data.shape, {objName: data.objName, color: data.color, position: data.position, scale: data.scale});
 		});
 
 		socket.on('move obj', (data) => {
@@ -427,6 +427,21 @@ class Scribubble extends Component {
 				target.scale.x = data.scale.x;
 				target.scale.y = data.scale.y;
 				target.scale.z = data.scale.z;
+			}
+		});
+
+		socket.on('rotate obj', (data) => {
+			// console.log(data);
+			const target = this.objEntity.getObjectByName(data.objName);
+
+			if (target.type === 'Line2') {
+				target.parent.ratation.x = data.ratation.x;
+				target.parent.ratation.y = data.ratation.y;
+				target.parent.ratation.z = data.ratation.z;
+			} else {
+				target.ratation.x = data.ratation.x;
+				target.ratation.y = data.ratation.y;
+				target.ratation.z = data.ratation.z;
 			}
 		});
 	}
@@ -716,6 +731,11 @@ class Scribubble extends Component {
 					x: shapeObj.position.x,
 					y: shapeObj.position.y,
 					z: shapeObj.position.z
+				},
+				scale: {
+					x: shapeObj.scale.x,
+					y: shapeObj.scale.y,
+					z: shapeObj.scale.z
 				}
 			});
 		} else { // 타인이 그린 경우, 저장된 데이터로 그리는 경우
@@ -738,8 +758,11 @@ class Scribubble extends Component {
 
 			const pos = shapeAttribute.position;
 			shapeObj.position.copy(new THREE.Vector3(pos.x, pos.y, pos.z));
+
 			const scale = shapeAttribute.scale;
-			shapeObj.scale.copy(new THREE.Vector3(scale.x, scale.y, scale.z));
+			shapeObj.scale.x = scale.x;
+			shapeObj.scale.y = scale.y;
+			shapeObj.scale.z =  scale.z;
 
 			shapeObj.name = shapeAttribute.objName;
 
