@@ -39,6 +39,7 @@ import {
 import { ProfileBlock, ProfileSM } from '../../components/Profile';
 import { ColorPicker, LengthInput, ZoomInput } from "../../components/Input";
 import { ColBar, DivisionLine, RowBottomBar } from "../../components/Bar";
+import { Helper } from "../../components/Helper";
 
 import io, { connect } from "socket.io-client";
 
@@ -60,6 +61,7 @@ const socket = io(server_host, {});
 // 	}
 // });
 
+
 const MODE = {
   EXPLORING: "EXPLORING",
   SELECTING: "SELECTING",
@@ -78,7 +80,15 @@ class Scribubble extends Component {
 		pallete: [],
 		zoom: 1,
 		tfcMode: 'translate',
-		userList: []
+		userList: [],
+		helper: {
+			pos: {
+				left: 0,
+				top: 0,
+			},
+			msg: '메세지',
+			isHover: false
+		}
 	};
 
 	constructor() {
@@ -146,7 +156,7 @@ class Scribubble extends Component {
 		
 		this.transformControls.addEventListener('dragging-changed', (e) => {
 			if (this.state.mode === MODE.SELECTING) 
-			this.controls.enabled = !e.value;
+				this.controls.enabled = !e.value;
 		});
 
 		this.transformControls.addEventListener('objectChange', (e) => {
@@ -506,11 +516,6 @@ class Scribubble extends Component {
 		let curLine = getLastLine(this.user_id);
 		let curPos = getCenterPos(curLine);
 
-		// curLine.parent.position.copy(curPos);
-		// curLine.position.copy(curPos.negate());
-		// this.transformControls.attach(obj);
-
-		// console.log(`draw stop ${this.bubbleName}`);
 		socket.emit('draw stop', {
 			bubbleName: this.bubbleName,
 			user_id: this.user_id,
@@ -771,24 +776,45 @@ class Scribubble extends Component {
 		this.transformControls.setMode(mode);
 	}
 
+	showHelper = (e, msg) => {
+		this.setState({
+			helper: {
+				isHover: true,
+				pos: {
+					left: e.clientX + 10,
+					top: e.clientY + 10
+				},
+				msg: msg
+			}
+		});
+	};
+
+	hideHelper = () => {
+		this.setState({ helper: { isHover: false } });
+	}
+
 	render() {
 		return (	
 		<div id="Scribubble" ref={el => this.element = el} >
+			<Helper pos={this.state.helper.pos} msg={this.state.helper.msg} isHover={this.state.helper.isHover}></Helper>
 			<div class={style.rightSide}>
 				<div class={style.rightSideUI}>
 					<div style="display: flex;">
 						<ProfileBlock>
 							{
 								this.state.userList.map(user => {
-									return <ProfileSM>{user.user_nickname}</ProfileSM>
+									return <ProfileSM
+										onMouseEnter={e => this.showHelper(e, user.user_nickname)}
+										onMouseLeave={this.hideHelper}
+									>
+										{user.user_nickname}
+									</ProfileSM>
 								})
 							}
 						</ProfileBlock>
 						<TextButton onClick={() => { this.setState((prev) => ({ openPanel: !prev.openPanel })) }}>
 						</TextButton>
 					</div>
-					{/* <TextButton onClick={() => { this.setState((prev) => ({ openPanel: !prev.openPanel })) }}>
-					</TextButton> */}
 					<RowBottomBar>
 						<MinusButton onClick={() => this.zoomControl(-0.01)}></MinusButton>
 						<ZoomInput value={this.state.zoom} min={0} max={10} step={0.01}></ZoomInput>
@@ -804,16 +830,22 @@ class Scribubble extends Component {
 					<ExploreToolButton
 						onClick={e => { this.modeChange(MODE.EXPLORING) }}
 						isActive={this.state.mode === MODE.EXPLORING}
+						onMouseEnter={e => this.showHelper(e, 'explore')}
+						onMouseLeave={this.hideHelper}
 					></ExploreToolButton>
 
 					<SelectToolButton
 						onClick={e => { this.modeChange(MODE.SELECTING) }}
 						isActive={this.state.mode === MODE.SELECTING}
+						onMouseEnter={e => this.showHelper(e, 'select')}
+						onMouseLeave={this.hideHelper}
 					></SelectToolButton>
 					
 					<DrawingToolButton
 						isActive={this.state.mode === MODE.DRAWING}
 						onClick={e => { this.modeChange(MODE.DRAWING) }}
+						onMouseEnter={e => this.showHelper(e, 'drawing')}
+						onMouseLeave={this.hideHelper}
 					></DrawingToolButton>
 					
 					<EraseToolButton
@@ -845,7 +877,9 @@ class Scribubble extends Component {
 					<DivisionLine></DivisionLine>
 
 					<AddPalleteButton
-						onClick={e => { this.setState(prev => ({ pallete: [this.state.drawingColor, ...prev.pallete]})) }}>
+						onClick={e => { this.setState(prev => ({ pallete: [this.state.drawingColor, ...prev.pallete]})) }}
+						onMouseEnter={e => this.showHelper(e, 'add pallete')}
+						onMouseLeave={this.hideHelper}>
 					</AddPalleteButton>
 					{
 						this.state.pallete.map((color, idx) => 

@@ -72,7 +72,7 @@ export const TextButton = (props) =>  {
 //=============================================================
 export const ExploreToolButton = (props) => {
     return (
-        <ToolButton isActive={props.isActive} onClick={props.onClick}>
+        <ToolButton isActive={props.isActive} onClick={props.onClick} onMouseEnter={props.onMouseEnter} onMouseLeave={props.onMouseLeave}>
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                 <path d="M8 13v-7.5a1.5 1.5 0 0 1 3 0v6.5"></path>
@@ -86,7 +86,7 @@ export const ExploreToolButton = (props) => {
 
 export const SelectToolButton = (props) => {
     return (
-        <ToolButton isActive={props.isActive} onClick={props.onClick}>
+        <ToolButton isActive={props.isActive} onClick={props.onClick} onMouseEnter={props.onMouseEnter} onMouseLeave={props.onMouseLeave}>
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                 <line x1="3" y1="12" x2="6" y2="12"></line>
@@ -100,9 +100,9 @@ export const SelectToolButton = (props) => {
     );
 };
 
-export const EraseToolButton = ({ isActive, onClick, disabled=false }) => {
+export const EraseToolButton = (props) => {
     return (
-        <ToolButton isActive={isActive} onClick={onClick} disabled={disabled}>
+        <ToolButton isActive={props.isActive} onClick={props.onClick} disabled={props.disabled} onMouseEnter={props.onMouseEnter} onMouseLeave={props.onMouseLeave}>
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                 <path d="M19 19h-11l-4 -4a1 1 0 0 1 0 -1.41l10 -10a1 1 0 0 1 1.41 0l5 5a1 1 0 0 1 0 1.41l-9 9"></path>
@@ -114,7 +114,7 @@ export const EraseToolButton = ({ isActive, onClick, disabled=false }) => {
 
 export const DrawingToolButton = (props) => {
     return (    
-        <ToolButton isActive={props.isActive} onClick={props.onClick}>
+        <ToolButton isActive={props.isActive} onClick={props.onClick} onMouseEnter={props.onMouseEnter} onMouseLeave={props.onMouseLeave}>
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                 <path d="M20 17v-12c0 -1.121 -.879 -2 -2 -2s-2 .879 -2 2v12l2 2l2 -2z"></path>
@@ -127,7 +127,7 @@ export const DrawingToolButton = (props) => {
 
 export const ShapeToolButton = (props) => {
     return (    
-        <ToolButton isActive={props.isActive} onClick={props.onClick}>
+        <ToolButton isActive={props.isActive} onClick={props.onClick} onMouseEnter={props.onMouseEnter} onMouseLeave={props.onMouseLeave}>
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                 <path d="M12 3l-4 7h8z"></path>
@@ -143,7 +143,7 @@ export const ShapeToolButton = (props) => {
 //=============================================================
 export const DashedButton = (props) => {
     return (
-        <ToolButton isActive={props.isActive} onClick={props.onClick}>
+        <ToolButton isActive={props.isActive} onClick={props.onClick} onMouseEnter={props.onMouseEnter} onMouseLeave={props.onMouseLeave}>
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                 <path d="M5 12h2"></path>
@@ -168,7 +168,7 @@ export const PalleteButton = styled(RoundButton)`
 
 export const AddPalleteButton = (props) => {
     return (
-        <RoundButton onClick={props.onClick}>
+        <RoundButton onClick={props.onClick} onMouseEnter={props.onMouseEnter} onMouseLeave={props.onMouseLeave}>
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                 <path d="M12 21a9 9 0 1 1 0 -18a9 8 0 0 1 9 8a4.5 4 0 0 1 -4.5 4h-2.5a2 2 0 0 0 -1 3.75a1.3 1.3 0 0 1 -1 2.25"></path>
@@ -185,7 +185,7 @@ export const AddPalleteButton = (props) => {
 //=============================================================
 export const PlaneButton = (props) => {
     return (
-        <RoundButton onClick={props.onClick}>
+        <RoundButton onClick={props.onClick} onMouseEnter={props.onMouseEnter} onMouseLeave={props.onMouseLeave}>
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                 <path d="M6.141 4.163l12 1.714a1 1 0 0 1 .859 .99v10.266a1 1 0 0 1 -.859 .99l-12 1.714a1 1 0 0 1 -1.141 -.99v-13.694a1 1 0 0 1 1.141 -.99z"></path>
@@ -195,7 +195,7 @@ export const PlaneButton = (props) => {
 };
 export const SphereButton = (props) => {
     return (
-        <RoundButton onClick={props.onClick}>
+        <RoundButton onClick={props.onClick} onMouseEnter={props.onMouseEnter} onMouseLeave={props.onMouseLeave}>
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                 <circle cx="12" cy="12" r="9"></circle>
@@ -205,7 +205,7 @@ export const SphereButton = (props) => {
 };
 export const CylinderButton = (props) => {
     return (
-        <RoundButton onClick={props.onClick}>
+        <RoundButton onClick={props.onClick} onMouseEnter={props.onMouseEnter} onMouseLeave={props.onMouseLeave}>
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                 <rect x="5" y="3" width="14" height="18" rx="2"></rect>
@@ -215,7 +215,7 @@ export const CylinderButton = (props) => {
 };
 export const SquareButton = (props) => {
     return (
-        <RoundButton onClick={props.onClick}>
+        <RoundButton onClick={props.onClick} onMouseEnter={props.onMouseEnter} onMouseLeave={props.onMouseLeave}>
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
                 <circle cx="5" cy="5" r="2"></circle>
