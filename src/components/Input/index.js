@@ -4,19 +4,17 @@ import styled, { css } from 'styled-components';
 export const ColorPicker = styled.input.attrs(props => ({
     type: "color"
 }))`
-    width: 1.75rem;
-    height: 1.75rem;
-	-webkit-appearance: none;
     border: none;
-    border-radius: 50%;
-    background: white;
-    cursor: pointer;
-    padding: 0px;
-    &:-webkit-color-swatch-wrapper {
-        padding: 0px;
+    background: none;
+    width: auto;
+    height: auto;
+    &::-webkit-color-swatch-wrapper {
+        width: 1.4rem;
+        height: 1.4rem;
+        padding: 0;
     }
-    &:-webkit-color-swatch {
-        border: none;
+    &::-webkit-color-swatch {
+        border-radius: 50%;
     }
 `;
 
