@@ -421,14 +421,8 @@ class Scribubble extends Component {
 			}
 		});
 
-		socket.on('user enter', (data) => {
-			this.setState({ userList: [ ...this.state.userList, {
-				user_id: data.user_id,
-				user_nickname: data.user_nickname
-			}]});
-		});
 		socket.on('user list', (data) => {
-			this.setState({ userList: [ ...this.state.userList, ...data.userList]});
+			this.setState({ userList: data.userList });
 		})
 		socket.on('user exit', (data) => {
 			this.setState({
@@ -458,7 +452,6 @@ class Scribubble extends Component {
 		socket.off('delete obj');
 		socket.off('remove current');
 		socket.off('get saved bubble');
-		socket.off('user enter');
 		socket.off('user list');
 		socket.off('user exit');
 		
