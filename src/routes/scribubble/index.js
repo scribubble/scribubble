@@ -341,12 +341,15 @@ class Scribubble extends Component {
 				for(let j = 1; j < linePos.length; j++) {
 					addPosition(line.drawer_id, new THREE.Vector3(linePos[j].x, linePos[j].y, linePos[j].z));
 				}
+
 				let curLine = getLastLine(line.drawer_id);
 				
 				curLine.parent.position.set(line.tfcPosition.x, line.tfcPosition.y, line.tfcPosition.z);
 				curLine.position.set(line.position.x, line.position.y, line.position.z);
 				curLine.parent.rotation.set(line.tfcRotation.x, line.tfcRotation.y, line.tfcRotation.z);
 				curLine.parent.scale.set(line.tfcScale.x, line.tfcScale.y, line.tfcScale.z);
+
+				curLine.type = 'Line2';
 			}
 
 			// 도형
@@ -746,7 +749,7 @@ class Scribubble extends Component {
 			shapeObj.position.copy(new THREE.Vector3(pos.x, pos.y, pos.z));
 
 			const scale = shapeAttribute.scale;
-			shapeObj.scale.set(scale.x, scale.y, scale,z);
+			shapeObj.scale.set(scale.x, scale.y, scale.z);
 
 			const rotation = shapeAttribute.rotation;
 			shapeObj.rotation.set(rotation.x, rotation.y, rotation.z);
@@ -830,7 +833,7 @@ class Scribubble extends Component {
 						value={this.state.drawingColor}
 						onChange={e => { 
 							this.setState({ drawingColor: e.target.value });
-							if (this.targetObj) {
+							if (this.targetObj && this.targetObj.type !== 'Line2Drawing') {
 								this.targetObj.material.color = new THREE.Color(e.target.value);
 								socket.emit('change obj color', {
 									bubbleName: this.bubbleName,
