@@ -37,6 +37,7 @@
     "preact-async-route": "^2.2.1",
     "preact-render-to-string": "^5.1.4",
     "preact-router": "^3.2.1",
+    "react-icons": "^4.3.1",
     "socket.io-client": "^4.4.0",
     "styled-components": "^5.3.3"
   },

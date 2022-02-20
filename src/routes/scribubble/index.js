@@ -25,8 +25,8 @@ import {
   ShapeToolButton,
   AddPalleteButton,
   PalleteButton,
-  PlaneButton,
   SquareButton,
+  CubeButton,
   SphereButton,
   CylinderButton,
   DashedButton,
@@ -650,13 +650,13 @@ class Scribubble extends Component {
 
 			let geometry, shapeObj;
 
-			if (shape === 'SQUARE') {
+			if (shape === 'CUBE') {
 				geometry = new THREE.BoxGeometry( 0.1, 0.1, 0.1 );
 			} else if (shape === 'SPHERE') {
 				geometry = new THREE.SphereGeometry( 0.1, 32, 16 );
 			} else if (shape === 'CYLINDER') {
 				geometry = new THREE.CylinderGeometry( 0.1, 0.1, 0.1, 36 );
-			} else if (shape === 'PLANE') {
+			} else if (shape === 'SQUARE') {
 				geometry = new THREE.PlaneGeometry( 0.1, 0.1 );
 				material.side = THREE.DoubleSide;
 			}
@@ -684,13 +684,13 @@ class Scribubble extends Component {
 
 			let geometry, shapeObj;
 
-			if (shape === 'SQUARE') {
+			if (shape === 'CUBE') {
 				geometry = new THREE.BoxGeometry( 0.1, 0.1, 0.1 );
 			} else if (shape === 'SPHERE') {
 				geometry = new THREE.SphereGeometry( 0.1, 32, 16 );
 			} else if (shape === 'CYLINDER') {
 				geometry = new THREE.CylinderGeometry( 0.1, 0.1, 0.1, 36 );
-			} else if (shape === 'PLANE') {
+			} else if (shape === 'SQUARE') {
 				geometry = new THREE.PlaneGeometry( 0.1, 0.1 );
 				material.side = THREE.DoubleSide;
 			}
@@ -844,10 +844,10 @@ class Scribubble extends Component {
 				{
 					this.state.mode === MODE.SHAPE &&
 					<ColBar>
-						<SquareButton onClick={e => { this.createShape('SQUARE', null) }}></SquareButton>
+						<CubeButton onClick={e => { this.createShape('CUBE', null) }}></CubeButton>
 						<SphereButton onClick={e => { this.createShape('SPHERE', null) }}></SphereButton>
 						<CylinderButton onClick={e => { this.createShape('CYLINDER', null) }}></CylinderButton>
-						<PlaneButton onClick={e => { this.createShape('PLANE', null) }}></PlaneButton>
+						<SquareButton onClick={e => { this.createShape('SQUARE', null) }}></SquareButton>
 					</ColBar>
 				}
 				{

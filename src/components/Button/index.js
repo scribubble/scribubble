@@ -1,5 +1,8 @@
 import styled, { css } from 'styled-components';
 import theme from '../../style/theme';
+import { BiCylinder, BiCube, BiEraser, BiGlobe, } from "react-icons/bi";
+import { GrSelect, } from "react-icons/gr";
+import { FiMove, FiRotateCw, FiMaximize2,  } from "react-icons/fi";
 
 export const RoundedButton = styled.button`
     border: none;
@@ -73,12 +76,10 @@ export const TextButton = (props) =>  {
 export const ExploreToolButton = (props) => {
     return (
         <ToolButton isActive={props.isActive} onClick={props.onClick}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" width="23" height="23" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <path d="M8 13v-7.5a1.5 1.5 0 0 1 3 0v6.5"></path>
-                <path d="M11 5.5v-2a1.5 1.5 0 1 1 3 0v8.5"></path>
-                <path d="M14 5.5a1.5 1.5 0 0 1 3 0v6.5"></path>
-                <path d="M17 7.5a1.5 1.5 0 0 1 3 0v8.5a6 6 0 0 1 -6 6h-2h.208a6 6 0 0 1 -5.012 -2.7a69.74 69.74 0 0 1 -.196 -.3c-.312 -.479 -1.407 -2.388 -3.286 -5.728a1.5 1.5 0 0 1 .536 -2.022a1.867 1.867 0 0 1 2.28 .28l1.47 1.47"></path>
+                <circle cx="12" cy="12" r="2"></circle>
+                <path d="M22 12c-2.667 4.667 -6 7 -10 7s-7.333 -2.333 -10 -7c2.667 -4.667 6 -7 10 -7s7.333 2.333 10 7"></path>
             </svg>
         </ToolButton>
     );
@@ -87,15 +88,7 @@ export const ExploreToolButton = (props) => {
 export const SelectToolButton = (props) => {
     return (
         <ToolButton isActive={props.isActive} onClick={props.onClick}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <line x1="3" y1="12" x2="6" y2="12"></line>
-                <line x1="12" y1="3" x2="12" y2="6"></line>
-                <line x1="7.8" y1="7.8" x2="5.6" y2="5.6"></line>
-                <line x1="16.2" y1="7.8" x2="18.4" y2="5.6"></line>
-                <line x1="7.8" y1="16.2" x2="5.6" y2="18.4"></line>
-                <path d="M12 12l9 3l-4 2l-2 4l-3 -9"></path>
-            </svg>
+            <GrSelect className="icon" size="22" color="currentColor"/>
         </ToolButton>
     );
 };
@@ -103,11 +96,7 @@ export const SelectToolButton = (props) => {
 export const EraseToolButton = ({ isActive, onClick, disabled=false }) => {
     return (
         <ToolButton isActive={isActive} onClick={onClick} disabled={disabled}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <path d="M19 19h-11l-4 -4a1 1 0 0 1 0 -1.41l10 -10a1 1 0 0 1 1.41 0l5 5a1 1 0 0 1 0 1.41l-9 9"></path>
-                <line x1="18" y1="12.3" x2="11.7" y2="6"></line>
-            </svg>
+            <BiEraser className="icon" size="24" color="currentColor"/>
         </ToolButton>
     );
 };
@@ -117,9 +106,8 @@ export const DrawingToolButton = (props) => {
         <ToolButton isActive={props.isActive} onClick={props.onClick}>
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <path d="M20 17v-12c0 -1.121 -.879 -2 -2 -2s-2 .879 -2 2v12l2 2l2 -2z"></path>
-                <path d="M16 7h4"></path>
-                <path d="M18 19h-13a2 2 0 1 1 0 -4h4a2 2 0 1 0 0 -4h-3"></path>
+                <path d="M4 20h4l10.5 -10.5a1.5 1.5 0 0 0 -4 -4l-10.5 10.5v4"></path>
+                <line x1="13.5" y1="6.5" x2="17.5" y2="10.5"></line>
             </svg>
         </ToolButton>
     );
@@ -183,12 +171,13 @@ export const AddPalleteButton = (props) => {
 //=============================================================
 // Shape Button
 //=============================================================
-export const PlaneButton = (props) => {
+
+export const SquareButton = (props) => {
     return (
         <RoundButton onClick={props.onClick}>
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <path d="M6.141 4.163l12 1.714a1 1 0 0 1 .859 .99v10.266a1 1 0 0 1 -.859 .99l-12 1.714a1 1 0 0 1 -1.141 -.99v-13.694a1 1 0 0 1 1.141 -.99z"></path>
+                <rect x="4" y="4" width="16" height="16" rx="2"></rect>
             </svg>
         </RoundButton>
     );
@@ -196,37 +185,21 @@ export const PlaneButton = (props) => {
 export const SphereButton = (props) => {
     return (
         <RoundButton onClick={props.onClick}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <circle cx="12" cy="12" r="9"></circle>
-            </svg>
+            <BiGlobe className="icon" size="24" color="currentColor"/>
         </RoundButton>
     );
 };
 export const CylinderButton = (props) => {
     return (
         <RoundButton onClick={props.onClick}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <rect x="5" y="3" width="14" height="18" rx="2"></rect>
-            </svg>
+            <BiCylinder className="icon" size="24" color="currentColor"/>
         </RoundButton>
     );
 };
-export const SquareButton = (props) => {
+export const CubeButton = (props) => {
     return (
         <RoundButton onClick={props.onClick}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <circle cx="5" cy="5" r="2"></circle>
-                <circle cx="19" cy="5" r="2"></circle>
-                <circle cx="5" cy="19" r="2"></circle>
-                <circle cx="19" cy="19" r="2"></circle>
-                <line x1="5" y1="7" x2="5" y2="17"></line>
-                <line x1="7" y1="5" x2="17" y2="5"></line>
-                <line x1="7" y1="19" x2="17" y2="19"></line>
-                <line x1="19" y1="7" x2="19" y2="17"></line>
-            </svg>
+            <BiCube className="icon" size="24" color="currentColor"/>
         </RoundButton>
     );
 };
@@ -259,34 +232,21 @@ export const MinusButton = (props) => {
 export const MoveButton = (props) => {
     return (
         <ToolButton isActive={props.isActive} onClick={props.onClick}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <path d="M18 15l3 -3l-3 -3"></path>
-                <circle cx="5" cy="12" r="2"></circle>
-                <path d="M7 12h14"></path>
-            </svg>
+            <FiMove className="icon" size="22" color="currentColor"/>
         </ToolButton>
     );
 };
 export const RotateButton = (props) => {
     return (
         <ToolButton isActive={props.isActive} onClick={props.onClick}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <path d="M12 16h4v4"></path>
-                <path d="M19.458 11.042c.86 -2.366 .722 -4.58 -.6 -5.9c-2.272 -2.274 -7.185 -1.045 -10.973 2.743c-3.788 3.788 -5.017 8.701 -2.744 10.974c2.227 2.226 6.987 1.093 10.74 -2.515"></path>
-            </svg>
+            <FiRotateCw className="icon" size="22" color="currentColor"/>
         </ToolButton>
     );
 };
 export const ScaleButton = (props) => {
     return (
         <ToolButton isActive={props.isActive} onClick={props.onClick}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <path d="M4 11v8a1 1 0 0 0 1 1h8m-9 -14v-1a1 1 0 0 1 1 -1h1m5 0h2m5 0h1a1 1 0 0 1 1 1v1m0 5v2m0 5v1a1 1 0 0 1 -1 1h-1"></path>
-                <path d="M4 12h7a1 1 0 0 1 1 1v7"></path>
-            </svg>
+            <FiMaximize2 className="icon" size="22" color="currentColor"/>
         </ToolButton>
     );
 };
