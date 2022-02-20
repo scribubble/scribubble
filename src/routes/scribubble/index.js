@@ -181,42 +181,6 @@ class Scribubble extends Component {
 			socket.emit(msg, data);
 		});
 		
-		const geometry = new THREE.BoxGeometry( 1, 1, 1 );
-		const material = new THREE.MeshBasicMaterial( {color: 0x4CC3D9} );
-		const cube = new THREE.Mesh( geometry, material );
-		cube.position.x = -1;
-		cube.position.y = 0.5;
-		cube.position.z = -3;
-		cube.rotation.x = 0;
-		cube.rotation.y = 45;
-		cube.rotation.z = 0;
-		this.objEntity.add( cube );
-		const geometry2 = new THREE.SphereGeometry( 1.25, 36, 18 );
-		const material2 = new THREE.MeshBasicMaterial( { color: 0xEF2D5E } );
-		const sphere = new THREE.Mesh( geometry2, material2 );
-		sphere.position.x = 0;
-		sphere.position.y = 1.25;
-		sphere.position.z = -5;
-		this.objEntity.add( sphere );
-		const geometry3 = new THREE.CylinderGeometry( 0.5, 0.5, 1.5, 36 );
-		const material3 = new THREE.MeshBasicMaterial( {color: 0xFFC65D } );
-		const cylinder = new THREE.Mesh( geometry3, material3 );
-		cylinder.position.x = 1;
-		cylinder.position.y = 0.75;
-		cylinder.position.z = -3;
-		this.objEntity.add( cylinder );
-		const geometry4 = new THREE.PlaneGeometry( 4, 4 );
-		const material4 = new THREE.MeshBasicMaterial( {color: 0x7BC8A4, side: THREE.DoubleSide} );
-		const plane = new THREE.Mesh( geometry4, material4 );
-		plane.position.x = 0;
-		plane.position.y = 0;
-		plane.position.z = -4;
-		plane.rotation.x = 55;
-		plane.rotation.y = 0;
-		plane.rotation.z = 0;
-		this.objEntity.add( plane );
-		this.renderer.render( this.scene, this.camera );
-
 		this.raycaster = new THREE.Raycaster();
 
 		// 그리고 있는지 여부
@@ -319,13 +283,9 @@ class Scribubble extends Component {
 		});
 
 		socket.on('get saved bubble', (data) => {
-			// console.log(`get saved bubble ${data}`);
-			// console.log(data.lines);
-
 			// 라인
 			for(let i = 0; i < data.lines.length; i++) {
 				let line = data.lines[i];
-				// console.log(';', line);
 				let linePos = line.linePositions;
 
 				createLineAndAdd(line.drawer_id, {
@@ -363,11 +323,6 @@ class Scribubble extends Component {
 					scale: item.scale
 				});
 			}
-
-			socket.on('drawing', (data) => {
-				// console.log('drawing');
-				addPosition(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z));
-			});
 		});
 
 		socket.on("delete obj", (data) => {
@@ -386,15 +341,14 @@ class Scribubble extends Component {
 		});
 
 		socket.on('change obj color', (data) => {
-			// console.log(data);
 			const target = this.objEntity.getObjectByName(data.objName);
-			// console.log(target);
+
 			target.material.color = new THREE.Color(data.color);
 		});
 
 		socket.on('move obj', (data) => {
 			const target = this.objEntity.getObjectByName(data.objName);
-			// console.log(target);
+
 			if(data.tfcPosition) {
 				target.parent.position.set(data.tfcPosition.x, data.tfcPosition.y, data.tfcPosition.z); 
 			} else {
@@ -403,7 +357,6 @@ class Scribubble extends Component {
 		});
 
 		socket.on('scale obj', (data) => {
-			// console.log(data);
 			const target = this.objEntity.getObjectByName(data.objName);
 
 			if (target.type === 'Line2') {
@@ -414,7 +367,6 @@ class Scribubble extends Component {
 		});
 
 		socket.on('rotate obj', (data) => {
-			// console.log(data);
 			const target = this.objEntity.getObjectByName(data.objName);
 			
 			if (target.type === 'Line2') {
