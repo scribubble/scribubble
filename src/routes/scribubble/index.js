@@ -121,18 +121,26 @@ class Scribubble extends Component {
 
 		this.controls = new OrbitControls(this.camera, this.renderer.domElement);
 		
+		this.scaleVector = new THREE.Vector3();
+
 		document.addEventListener('mousewheel', (e) => {
 			this.setState({ zoom:  this.controls.getDistance() });
 		})
-		// this.controls.addEventListener('change', (e) => {
-		// 	console.log('AA', this.camera.position.z);
-		// })
+		this.controls.addEventListener('change', (e) => {
+			this.nametagEntity.children.forEach((nt) => {
+				var scale = this.scaleVector.subVectors(nt.position, this.camera.position).length() / 70;
+				nt.scale.set(scale, scale, 1);
+			});
+		})
 		
 		this.controls.maxDistance = 10;
 
 		// 다른 오브젝트들의 부모가 될 상위 오브젝트 (line 및 도형 등 선택이 가능한 오브젝트들의 부모)
 		this.objEntity = new THREE.Object3D();
 		this.scene.add(this.objEntity);
+		// 네임 태그들의 부모가 될 상위 오브젝트
+		this.nametagEntity = new THREE.Object3D();
+		this.scene.add(this.nametagEntity);
 
 		// 선택모드 시 선택될 수 있는 오브젝트 위치를 보여줄 오브젝트
 		const sphGeometry = new THREE.SphereGeometry( 0.1 );
@@ -293,10 +301,12 @@ class Scribubble extends Component {
 				
 				const nametag = new THREE.Object3D();
 				nametag.add(nametagText);
-				nametag.scale.set(0.02, 0.02, 0.02);
+
+				var scale = this.scaleVector.subVectors(nametag.position, this.camera.position).length() / 70;
+				nametag.scale.set(scale, scale, 1);
 
 				this.nameTag[data.user_id] = nametag;
-				this.scene.add(this.nameTag[data.user_id]);
+				this.nametagEntity.add(this.nameTag[data.user_id]);
 			}
 			this.nameTag[data.user_id].position.copy(data.mousePos);
 
