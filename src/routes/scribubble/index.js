@@ -287,7 +287,6 @@ class Scribubble extends Component {
 		});
 
         socket.on('drawing', (data) => {
-			// console.log('drawing');
 			addPosition(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z));
         });
 
@@ -346,7 +345,10 @@ class Scribubble extends Component {
 		});
 
 		socket.on("delete obj", (data) => {
-			let obj = this.objEntity.getObjectByName(data.objName)
+			let obj = this.objEntity.getObjectByName(data.objName);
+			if (obj.type === 'Line2') {
+				this.objEntity.remove(obj.parent);
+			}
 			this.objEntity.remove(obj);
 		});
 
