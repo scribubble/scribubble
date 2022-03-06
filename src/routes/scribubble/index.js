@@ -46,21 +46,14 @@ import io, { connect } from "socket.io-client";
 import style from "./style.css";
 import theme from "../../style/theme"
 
-const server_host = ":4000"; // 로컬
-// const server_host = process.env.SERVER_URL; // 배포
+// const server_host = "https://localhost:4000"; // 로컬
+const server_host = process.env.SERVER_URL; // 배포
 // https 로 테스트할때
 // const server_host = "";
 
-const socket = io(server_host, {});
+// const socket = io(server_host, {});
 // https 로 테스트할때
-// const socket = io(server_host, {
-// 	// secure:true,
-// 	withCredentials: true,
-// 	extraHeaders: {
-// 	  "my-custom-header": "abcd"
-// 	}
-// });
-
+const socket = io(server_host, { transports: ['websocket'] });
 
 const MODE = {
   EXPLORING: "EXPLORING",
