@@ -1,0 +1,25 @@
+.leftSide {
+    display: flex;
+    position: fixed;
+    left: 0px;
+    top: 50%;
+    transform: translate(0px, -50%);
+    align-items: center;
+}
+
+.rightSide {
+    display: flex;
+    position: fixed;
+    height: 100%;
+    right: 0px;
+    top: 0px;
+    align-items: flex-start;
+}
+.rightSideUI {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-end;
+    height: 100%;
+}
