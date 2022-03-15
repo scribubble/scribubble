@@ -7,7 +7,8 @@ import {
 	removeLastLine,
 	getLastLine,
 	getCenterPos,
-  } from "../../util/drawLine";
+} from "../../util/drawLine";
+import { getBasisPosition } from "../../util/position";
 
 import './colorpicker.js';
 import './plane.js';

@@ -46,7 +46,8 @@ import io, { connect } from "socket.io-client";
 import style from "./style.css";
 import theme from "../../style/theme"
 
-const server_host = process.env.SERVER_URL; // 배포
+// const server_host = process.env.SERVER_URL; // 배포
+const server_host = ':4000'; // 배포
 const socket = io(server_host, { transports: ['websocket'] });
 
 const MODE = {
@@ -75,7 +76,8 @@ class Scribubble extends Component {
 			},
 			msg: '메세지',
 			isHover: false
-		}
+		},
+		showNametag: true
 	};
 
 	constructor() {
@@ -764,7 +766,14 @@ class Scribubble extends Component {
 								})
 							}
 						</ProfileBlock>
-						<TextButton onClick={() => { this.setState((prev) => ({ openPanel: !prev.openPanel })) }}>
+						<TextButton 
+							class={ this.state.showNametag ? 'on' : 'off' }
+							onClick={() => { 
+								this.setState((prev) => {
+									this.nametagEntity.visible = !this.state.showNametag;
+									return ({ openPanel: !prev.openPanel, showNametag: !prev.showNametag })
+								});
+							}}>
 						</TextButton>
 					</div>
 					<RowBottomBar>
