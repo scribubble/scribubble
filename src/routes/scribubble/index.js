@@ -15,7 +15,6 @@ import {
 } from "../../util/drawLine";
 import { refreshMousePosition, getCenterPosition, getBasisPosition } from "../../util/position";
 
-import RightPanel from "../../components/panel/RightPanel";
 import {
   TextButton,
   ExploreToolButton,
@@ -46,8 +45,7 @@ import io, { connect } from "socket.io-client";
 import style from "./style.css";
 import theme from "../../style/theme"
 
-// const server_host = process.env.SERVER_URL; // 배포
-const server_host = ':4000'; // 배포
+const server_host = process.env.SERVER_URL; // 배포
 const socket = io(server_host, { transports: ['websocket'] });
 
 const MODE = {
@@ -782,9 +780,6 @@ class Scribubble extends Component {
 						<PlusButton onClick={() => this.zoomControl(0.01)}></PlusButton>
 					</RowBottomBar>
 				</div>
-				{/* {
-					this.state.openPanel && <RightPanel></RightPanel>
-				} */}
 			</div>
 			<div class={style.leftSide}>
 				<ColBar>
