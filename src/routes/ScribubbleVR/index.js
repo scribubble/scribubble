@@ -91,7 +91,7 @@ AFRAME.registerComponent('primary-hand',{
 
 		this.distThresh = 0.001;
 
-		this.scene = scribubble.object3D;
+		this.scene = scribubble.object3D.parent;
 		this.objEntity = new THREE.Object3D();
 		this.scene.add(this.objEntity);
 		this.scribubbleComponent = scribubble.components.scribubble;
@@ -100,9 +100,9 @@ AFRAME.registerComponent('primary-hand',{
         var penSphere = document.querySelector("#penSpherePrimary");
 		this.el.setObject3D('penSpherePrimary', penSphere.object3D);
 
-		this.initListener();
-
 		this.initSocketListener();
+		
+		this.initListener();
 	},
 	
 	tick: function tick() {
@@ -126,8 +126,7 @@ AFRAME.registerComponent('primary-hand',{
 	initSocketListener: function initSocketListener() {
 
 		// 버블에 저장된 데이터 요청
-		const currentBubble = this.bubbleName;
-		socket.emit('enter bubble', currentBubble);
+		socket.emit('enter bubble', this.bubbleName);
 
         socket.on('user_id', (data) => {
 			this.user_id = data.user_id;
