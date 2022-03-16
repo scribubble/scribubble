@@ -1,41 +1,23 @@
 import { useEffect, useState, useRef } from 'preact/hooks';
 
-import { createLineGeometry, addPosition, createLineAndAdd, removeLastLine } from '../../util/drawLine';
+import {
+	createLineGeometry,
+	addPosition,
+	createLineAndAdd,
+	removeLastLine,
+	getLastLine,
+	getCenterPos,
+} from "../../util/drawLine";
+import { getBasisPosition } from "../../util/position";
 
 import './colorpicker.js';
 import './plane.js';
 
 import io from 'socket.io-client';
-// const server_host = ":4000";
-// https 로 테스트할때
-const server_host = "https://175.123.65.79:4000";
+const server_host = process.env.SERVER_URL; // 배포
+const socket = io(server_host, { transports: ['websocket'] });
 
-// const socket = io(server_host, {});
-// https 로 테스트할때
-const socket = io(server_host, {
-	// secure:true,
-	withCredentials: true,
-	extraHeaders: {
-	  "my-custom-header": "abcd"
-	}
-});
-
-let palleteIdx = 0;
-let pallete = [
-	'#5766c9',
-	'#6878de',
-	'#3f498a',
-	'#c7c7c7',
-	'#b5b5b5',
-	'#f76565',
-	'#3d3b3b',
-	'#ede4e4',
-	'#d4bb2c',
-	'#ba7d13',
-	'#0a9106',
-	'#0d7a0a'
-]
-let _drawingColor = pallete[palleteIdx];
+let _drawingColor = '#000000';
 let _lineWidth = 1;
 let _lineDashed = false;
 
@@ -79,12 +61,7 @@ const Pallete = ({ posY, color, clicked, removed, removeButttonColor="#FF7EE3" }
 }
 
 AFRAME.registerComponent('scribubble', {
-	init: function () {
-		this.initListener();
-		this.ASSSS = 10000;
-	},
-
-	initListener: function() {
+	init: function() {
 	}
 });
 
@@ -94,42 +71,51 @@ AFRAME.registerComponent('primary-hand',{
 		raycaster: { type: 'selector', default: '#raycaster' }
 	},
 
-	init: function init () {
+	init: function init() {
 		var _data = this.data,
         scribubble = _data.scribubble;
 
-		this.user_id = 'vr_id';
+		// 유저 고유 id
+		this.user_id = '(unknown)';
+		this.user_nickname = '(unknown)';
+
+		// 참여한 버블 이름
+		this.bubbleName = 'room1';
 		
+		// 다음에 생성할 오브젝트의 인덱스
+		this.objIdx = 0;
+
+		// 그리고 있는지 여부
 		this.isDrawing = false;
 		this.pen = this.el.object3D;
 
 		this.distThresh = 0.001;
 
-		this.scribubbleEntity = scribubble.object3D;
+		this.scene = scribubble.object3D;
+		this.objEntity = new THREE.Object3D();
+		this.scene.add(this.objEntity);
 		this.scribubbleComponent = scribubble.components.scribubble;
 
 		// primary controller 모델링 설정
         var penSphere = document.querySelector("#penSpherePrimary");
 		this.el.setObject3D('penSpherePrimary', penSphere.object3D);
 
-		this.initEventListner();
+		this.initListener();
+
+		this.initSocketListener();
 	},
 	
-	tick: function tick () {
+	tick: function tick() {
 		if (this.isDrawing) {
 			var currentPos = this.getLocalPenPos();
 			var distToLastPos = this.lastPos.distanceTo(currentPos);
 		
 			if (distToLastPos > this.distThresh) {
-				// addPosition(currentPos);
-
 				socket.emit('drawing', {
+					bubbleName: this.bubbleName,
+					objName: getLastLine(this.user_id).name,
 					user_id: this.user_id,
-					mousePos: {
-						x: currentPos.x,
-						y: currentPos.y,
-						z: currentPos.z,
-					}
+					mousePos: getBasisPosition(currentPos)
 				});
 				
 				this.lastPos = currentPos;
@@ -137,14 +123,15 @@ AFRAME.registerComponent('primary-hand',{
 		}
 	},
 
-	initEventListner: function initEventListner() {
+	initSocketListener: function initSocketListener() {
 
 		// 버블에 저장된 데이터 요청
-		let currentBubble = 'room1';
+		const currentBubble = this.bubbleName;
 		socket.emit('enter bubble', currentBubble);
 
         socket.on('user_id', (data) => {
 			this.user_id = data.user_id;
+			this.user_nickname = data.user_nickname;
         });
 
 		socket.on('draw start', (data) => {
@@ -152,42 +139,127 @@ AFRAME.registerComponent('primary-hand',{
 				width: data.linewidth,
 				color: data.color,
 				dashed: data.dashed,
+				objName: data.objName,
 				geo: createLineGeometry(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z))
-			}, this.scribubbleEntity);
+			}, this.objEntity);
 		});
 
         socket.on('drawing', (data) => {
 			addPosition(data.user_id, new THREE.Vector3(data.mousePos.x, data.mousePos.y, data.mousePos.z));
         });
 
+		socket.on('draw stop', (data) => {
+			const target = this.objEntity.getObjectByName(data.objName);
+			target.parent.position.copy(data.tfcPosition);
+			target.position.copy(data.position);
+			target.type = 'Line2';
+		});
+
 		socket.on('remove current', (data) => {
-			removeLastLine(data.user_id, this.scribubbleEntity);
+			removeLastLine(data.user_id, this.objEntity);
 		});
 
 		socket.on('get saved bubble', (data) => {
-			for (let i = 0; i < data.line.length; i++) {
-				let line = data.line[i];
-				let pos = line.linePositions;
-				let testUserId = data.userid[0]; // 데이터 구조에 오류가 있어서, 라인 작성자를 임시로 설정
+			// 라인
+			for (let i = 0; i < data.lines.length; i++) {
+				let line = data.lines[i];
+				let linePos = line.linePositions;
 
-				createLineAndAdd(testUserId, {
+				createLineAndAdd(line.drawer_id, {
 					width: line.lineWidth,
 					color: line.lineColor,
-					dashed: line.dashed,
+					dashed: line.lineDashed,
+					objName: line.objName,
 					geo: createLineGeometry(
-						testUserId, 
-						new THREE.Vector3(pos[0].x, pos[0].y, pos[0].z))
-				}, this.scribubbleEntity);
+						line.drawer_id, 
+						new THREE.Vector3(linePos[0].x, linePos[0].y, linePos[0].z)),
+				}, this.objEntity);
 				
-				for(let j = 1; j < pos.length; j++) {
-					addPosition(testUserId, new THREE.Vector3(pos[j].x, pos[j].y, pos[j].z));
+				for (let j = 1; j < linePos.length; j++) {
+					addPosition(line.drawer_id, new THREE.Vector3(linePos[j].x, linePos[j].y, linePos[j].z));
 				}
+
+				let curLine = getLastLine(line.drawer_id);
+				
+				curLine.parent.position.set(line.tfcPosition.x, line.tfcPosition.y, line.tfcPosition.z);
+				curLine.position.set(line.position.x, line.position.y, line.position.z);
+				curLine.parent.rotation.set(line.tfcRotation.x, line.tfcRotation.y, line.tfcRotation.z);
+				curLine.parent.scale.set(line.tfcScale.x, line.tfcScale.y, line.tfcScale.z);
+
+				curLine.type = 'Line2';
+			}
+
+			// 도형
+			for (let i = 0; i < data.shapes.length; i++) {
+				let item = data.shapes[i];
+				this.createShape(item.shape, {
+					objName: item.objName, 
+					color: item.color, 
+					position: item.position, 
+					rotation: item.rotation, 
+					scale: item.scale
+				});
 			}
 		});
 
+		socket.on("delete obj", (data) => {
+			let obj = this.objEntity.getObjectByName(data.objName);
+			if (obj.type === 'Line2') {
+				this.objEntity.remove(obj.parent);
+			}
+			this.objEntity.remove(obj);
+		});
+
+		socket.on("create shape", (data) => {
+			this.createShape(data.shape, {
+				objName: data.objName, 
+				color: data.color, 
+				position: data.position, 
+				rotation: data.rotation,
+				scale: data.scale
+			});
+		});
+
+		socket.on('change obj color', (data) => {
+			const target = this.objEntity.getObjectByName(data.objName);
+			target.material.color = new THREE.Color(data.color);
+		});
+
+		socket.on('move obj', (data) => {
+			const target = this.objEntity.getObjectByName(data.objName);
+
+			if(data.tfcPosition) {
+				target.parent.position.set(data.tfcPosition.x, data.tfcPosition.y, data.tfcPosition.z); 
+			} else {
+				target.position.set(data.position.x, data.position.y, data.position.z); 
+			}
+		});
+
+		socket.on('scale obj', (data) => {
+			const target = this.objEntity.getObjectByName(data.objName);
+
+			if (target.type === 'Line2') {
+				target.parent.scale.set(data.scale.x, data.scale.y, data.scale.z);
+			} else {
+				target.scale.set(data.scale.x, data.scale.y, data.scale.z);
+			}
+		});
+
+		socket.on('rotate obj', (data) => {
+			const target = this.objEntity.getObjectByName(data.objName);
+			
+			if (target.type === 'Line2') {
+				target.parent.rotation.set(data.rotation.x, data.rotation.y, data.rotation.z);
+			} else {
+				target.rotation.set(data.rotation.x, data.rotation.y, data.rotation.z);
+			}
+		});
+	},
+	
+	initListener: function initListener() {
 		this.el.addEventListener('triggerdown', e => this.triggerdown(e));
 		this.el.addEventListener('triggerup', e => this.triggerup(e));
-		this.el.addEventListener('bbuttondown', e => this.bbuttondown(e));
+		// this.el.addEventListener('bbuttondown', e => this.bbuttondown(e));
 
 		this.data.raycaster.addEventListener('raycaster-intersection', evt => {
 			this.intersections = evt.detail.els;
@@ -198,7 +270,7 @@ AFRAME.registerComponent('primary-hand',{
 
 		// this.el.addEventListener('thumbstickmoved', e => this.logThumbstick(e));
 	},
-	
+
 	triggerdown: function triggerdown(event) {
 		if (this.intersections)
 			return;
@@ -207,28 +279,38 @@ AFRAME.registerComponent('primary-hand',{
 			this.isDrawing = true;
 			this.lastPos = this.getLocalPenPos();
 			
-			// createLineAndAdd({
-			// 	width: 1,
-			// 	color: new THREE.Color(0, 1, 1),
-			// 	geo: createLineGeometry(data.user_id, this.lastPos)
-			// }, this.scribubbleEntity);
-
 			socket.emit('draw start', {
+				bubbleName: this.bubbleName,
 				user_id: this.user_id,
+				user_nickname: this.user_nickname,
 				linewidth: _lineWidth,
 				color: _drawingColor,
 				dashed: _lineDashed,
-				mousePos: {
-					x: this.lastPos.x,
-					y: this.lastPos.y,
-					z: this.lastPos.z,
-				}
+				objName: this.user_id + this.objIdx,
+				mousePos: getBasisPosition(this.lastPos)
 			});
+
+			this.objIdx++;
 		}
 	},
 
 	triggerup:  function triggerup(event) {
 		this.isDrawing = false;
+
+		const curLine = getLastLine(this.user_id);
+		const curPos = getCenterPos(curLine);
+
+		socket.emit('draw stop', {
+			bubbleName: this.bubbleName,
+			user_id: this.user_id,
+			objName: curLine.name,
+			tfcPosition: getBasisPosition(curPos),
+			position: {
+				x: -curPos.x,
+				y: -curPos.y,
+				z: -curPos.z
+			}
+		});
 	},
 
 	bbuttondown:  function bbuttondown(event) {
@@ -242,36 +324,14 @@ AFRAME.registerComponent('primary-hand',{
 
 		this.pen.localToWorld(pos);
 
-		this.scribubbleEntity.worldToLocal(pos);
+		this.objEntity.worldToLocal(pos);
 
 		return pos;
-	},
-
-	logThumbstick: function logThumbstick(event) {
-		// if (event.detail.y > 0.95) { console.log("DOWN"); }
-		// if (event.detail.y < -0.95) { console.log("UP"); }
-		// if (event.detail.x < -0.95) { console.log("LEFT"); }
-		// if (event.detail.x > 0.95) { console.log("RIGHT"); }
 	}
 });
 
-AFRAME.registerComponent('secondary-hand',{
-	schema: {
-	},
-
-	init: function init () {
-		this.initEventListner();
-	},
-	initEventListner: function initEventListner() {
-		this.el.addEventListener('xbuttondown', e => this.xbuttondown(e));
-		this.el.addEventListener('ybuttondown', e => this.ybuttondown(e));
-
-	},
-	xbuttondown:  function xbuttondown(event) {
-		
-	},
-	ybuttondown:  function ybuttondown(event) {
-		
+AFRAME.registerComponent('secondary-hand', {
+	init: function init() {
 	}
 });
 
@@ -299,15 +359,21 @@ const ScribubbleVR = () => {
 		});
 		colorpicker.current.addEventListener('thickness_changed', e => {
 			_lineWidth = (e.detail.thickness < 0.05) ? 1 : e.detail.thickness * 30;
-			console.log(_lineWidth);
 		});
 
         return () => {
             socket.off('user_id');
             socket.off('draw start');
             socket.off('drawing');
+            socket.off('draw stop');
 			socket.off('remove current');
 			socket.off('get saved bubble');
+			socket.off('delete obj');
+			socket.off('create shape');
+			socket.off('change obj color');
+			socket.off('move obj');
+			socket.off('scale obj');
+			socket.off('rotate obj');
             socket.close();
         };
 	}, []);
@@ -341,9 +407,7 @@ const ScribubbleVR = () => {
 			>
 				<a-circle ref={colorpicker} colorpicker="colorWheel: #colorWheel; lightWheel: #lightWheel; thicknessWheel: #thicknessWheel;" id="colorpicker" color="#a8a8a8" radius="2" opacity="1" scale="0.1 0.1 0.1">
 					<a-circle id="colorWheel" position="0 0 0.1" rotation="0 0 0" class="wheels"></a-circle>
-					{/* <a-plane id="lightWheel" position="1.2 0 -3" width="0.1" height="2" class="wheels"></a-plane> */}
 					<a-plane id="lightWheel" position="0 -1.1 0.1" width="2" height="0.15" class="wheels"></a-plane>
-					{/* <a-triangle id="thicknessWheel" color="#000" position="-1.2 0 -3" vertex-a="-0.1 -1 0" vertex-b="0.1 -1 0" vertex-c="0 1 0" class="wheels"></a-triangle> */}
 					<a-triangle id="thicknessWheel" color="#000" position="0 1.1 0.1" vertex-a="-1 0 0" vertex-b="1 -0.1 0" vertex-c="1 0.1 0"></a-triangle>
 					<a-plane id="thicknessWheelCol" position="0 1.1 0.11" material="side: double; color: #FFF; transparent: true; opacity: 0"  width="2" height="0.2" class="wheels"></a-plane>
 					
@@ -362,15 +426,11 @@ const ScribubbleVR = () => {
 									posY={0.75 - 0.6 * idx}
 									color={e.color}
 									clicked={() => {
-										console.log(e.color);
 										selectPallete(e)
 									}}
 									removed={() => {
-										// setPallete(prev => [...prev.slice(0, idx), ...prev.slice(idx + 1, prev.length - 1)] )
 										setPallete(prev => {
-											// const temp = [...prev];
 											prev.splice(idx, 1);
-											console.log(prev);
 											return [...prev];
 										});
 									}
@@ -393,10 +453,8 @@ const ScribubbleVR = () => {
 				material="opacity: 1"
 			></a-sphere>
 
-			{/* <a-entity laser-controls="hand: left;" raycaster="lineColor: red; lineOpacity: 0.5"></a-entity> */}
 			<a-entity id="raycaster" laser-controls="hand: right;" raycaster="objects: .wheels; lineColor: blue; lineOpacity: 0.5"></a-entity>
 
-			{/* <a-box position="-1 0.5 1" rotation="0 45 0" color="#4CC3D9" shadow="" material="" geometry=""></a-box> */}
 			{/* <a-sphere position="0 1.25 -5" radius="1.25" color="#EF2D5E" shadow="" material="" geometry=""></a-sphere>
 			<a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D" shadow="" material="" geometry=""></a-cylinder>
 			<a-plane position="0 0 -4" rotation="-90 0 0" width="4" height="4" color="#7BC8A4" shadow="" material="" geometry=""></a-plane> */}
