@@ -4,7 +4,7 @@ import Bubble from "../../components/Bubble";
 import styled from "styled-components";
 import { useEffect } from "preact/hooks";
 
-import Stats from "three/examples/jsm/libs/stats.module.js";
+// import Stats from "three/examples/jsm/libs/stats.module.js";
 
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
@@ -35,10 +35,10 @@ const Home = () => {
     camera.position.z = -20;
     camera.position.y = 10;
 
-    stats = new Stats();
+    // stats = new Stats();
 
     document.body.appendChild(renderer.domElement);
-    document.body.appendChild(stats.dom);
+    // document.body.appendChild(stats.dom);
 
     // camera controls
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -121,7 +121,7 @@ const Home = () => {
     requestAnimationFrame(animate);
 
     const delta = clock.getDelta();
-    stats.update();
+    // stats.update();
     group.rotation.x += delta * rotationSpeed;
     group.rotation.y += (delta * rotationSpeed) / 5;
     composer.render(delta);
@@ -152,7 +152,7 @@ const Home = () => {
         </CreateBubble>
       </Room>
       <Credits>
-        Images by <a href="https://">Scribubble</a>, licensed under{" "}
+        Images by <a href="/">Scribubble</a>, licensed under{" "}
         <span>youjin, hyejin, yechan, subin, jiheun, yeji</span>
       </Credits>
     </Wrapper>
@@ -177,7 +177,9 @@ const Title = styled.h1`
   font-weight: bold;
   font-family: "Poiret One", cursive;
   color: ${({ theme }) => theme.black};
-  cursor: pointer;
+  text-align: center;
+  // cursor: pointer;
+  padding: 0rem .5rem;
 `;
 
 const Room = styled.div`
@@ -185,12 +187,17 @@ const Room = styled.div`
   position: relative;
   display: flex;
   align-items: center;
+  
+	@media (max-width: 992px) {
+    padding: 5vh 0;
+    flex-direction: column;
+	}
 `;
 
 const CreateBubble = styled.div`
   width: 60vh;
   height: 60vh;
-  margin: 0 70px;
+  margin: 1rem 70px;
   border-radius: 50%;
   background-image: linear-gradient(125deg, #e8ecf5 0%, #4567f6 100%);
   opacity: 0.6;
@@ -204,6 +211,19 @@ const CreateBubble = styled.div`
     background-image: linear-gradient(135deg, #9fe3f7 0%, #4567f6 100%);
     opacity: 0.7;
   }
+	@media (max-width: 1750px) {
+    width: 50vh;
+    height: 50vh;
+	}
+	@media (max-width: 1200px) {
+    width: 40vh;
+    height: 40vh;
+    margin: 1rem 1rem;
+	}
+	@media (max-width: 992px) {
+    width: 30vh;
+    height: 30vh;
+	}
 `;
 
 const Text = styled.span`
@@ -212,7 +232,9 @@ const Text = styled.span`
 `;
 
 const Credits = styled.div`
+  padding: 0rem 0.5rem;
   margin-bottom: 15px;
+  text-align: center;
   font-size: 18px;
   font-family: "Poiret One", cursive;
 `;
