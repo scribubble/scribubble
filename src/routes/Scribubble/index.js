@@ -36,7 +36,7 @@ import {
   ScaleButton,
 } from "../../components/Button";
 import { ProfileBlock, ProfileSM } from '../../components/Profile';
-import { ColorPicker, LengthInput, ZoomInput } from "../../components/Input";
+import { RoundColorPicker, ColorPicker, LengthInput, ZoomInput } from "../../components/Input";
 import { ColBar, DivisionLine, RowBottomBar } from "../../components/Bar";
 import { Helper } from "../../components/Helper";
 
@@ -771,8 +771,10 @@ class Scribubble extends Component {
 									this.nametagEntity.visible = !this.state.showNametag;
 									return ({ openPanel: !prev.openPanel, showNametag: !prev.showNametag })
 								});
-							}}>
-						</TextButton>
+							}}
+							onMouseEnter={e => this.showHelper(e, 'toggle name')}
+							onMouseLeave={this.hideHelper}
+						></TextButton>
 					</div>
 					<RowBottomBar>
 						<MinusButton onClick={() => this.zoomControl(-0.01)}></MinusButton>
@@ -812,23 +814,27 @@ class Scribubble extends Component {
 					<ShapeToolButton
 						isActive={this.state.mode === MODE.SHAPE}
 						onClick={e => { this.modeChange(MODE.SHAPE) }}
+						onMouseEnter={e => this.showHelper(e, '3d shape')}
+						onMouseLeave={this.hideHelper}
 					></ShapeToolButton>
 
-					<ColorPicker
-						value={this.state.drawingColor}
-						onChange={e => { 
-							this.setState({ drawingColor: e.target.value });
-							if (this.targetObj && this.targetObj.type !== 'Line2Drawing') {
-								this.targetObj.material.color = new THREE.Color(e.target.value);
-								socket.emit('change obj color', {
-									bubbleName: this.bubbleName,
-									objName: this.targetObj.name, 
-									objType: this.targetObj.type,
-									color: e.target.value,
-								});
-							}
-						}}
-					></ColorPicker>
+					<RoundColorPicker>
+						<ColorPicker
+							value={this.state.drawingColor}
+							onChange={e => { 
+								this.setState({ drawingColor: e.target.value });
+								if (this.targetObj && this.targetObj.type !== 'Line2Drawing') {
+									this.targetObj.material.color = new THREE.Color(e.target.value);
+									socket.emit('change obj color', {
+										bubbleName: this.bubbleName,
+										objName: this.targetObj.name, 
+										objType: this.targetObj.type,
+										color: e.target.value,
+									});
+								}
+							}}
+						></ColorPicker>
+					</RoundColorPicker>
 
 					<DivisionLine></DivisionLine>
 

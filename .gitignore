@@ -9,4 +9,4 @@ package-lock.json
 
 *.DS_Store
 
-# preact.config.js
+preact.config.js

@@ -66,7 +66,12 @@ export const SelectingMe = styled.div`
 
 export const TextButton = (props) => {
 	return (
-		<IndependentButton onClick={props.onClick} className={props.class}>
+		<IndependentButton
+			onClick={props.onClick}
+			className={props.class}
+			onMouseEnter={props.onMouseEnter}
+			onMouseLeave={props.onMouseLeave}
+		>
 			<TiSortAlphabetically className='icon' size='22' color='currentColor' />
 		</IndependentButton>
 	);
@@ -81,7 +86,8 @@ export const ExploreToolButton = (props) => {
 			isActive={props.isActive}
 			onClick={props.onClick}
 			onMouseEnter={props.onMouseEnter}
-			onMouseLeave={props.onMouseLeave}>
+			onMouseLeave={props.onMouseLeave}
+		>
 			<svg
 				xmlns='http://www.w3.org/2000/svg'
 				width='23'
@@ -106,7 +112,8 @@ export const SelectToolButton = (props) => {
 			isActive={props.isActive}
 			onClick={props.onClick}
 			onMouseEnter={props.onMouseEnter}
-			onMouseLeave={props.onMouseLeave}>
+			onMouseLeave={props.onMouseLeave}
+		>
 			<GrSelect className='icon' size='22' color='currentColor' />
 		</ToolButton>
 	);
@@ -119,7 +126,8 @@ export const EraseToolButton = (props) => {
 			onClick={props.onClick}
 			disabled={props.disabled}
 			onMouseEnter={props.onMouseEnter}
-			onMouseLeave={props.onMouseLeave}>
+			onMouseLeave={props.onMouseLeave}
+		>
 			<BiEraser className='icon' size='24' color='currentColor' />
 		</ToolButton>
 	);
@@ -131,7 +139,8 @@ export const DrawingToolButton = (props) => {
 			isActive={props.isActive}
 			onClick={props.onClick}
 			onMouseEnter={props.onMouseEnter}
-			onMouseLeave={props.onMouseLeave}>
+			onMouseLeave={props.onMouseLeave}
+		>
 			<svg
 				xmlns='http://www.w3.org/2000/svg'
 				width='24'
@@ -156,7 +165,8 @@ export const ShapeToolButton = (props) => {
 			isActive={props.isActive}
 			onClick={props.onClick}
 			onMouseEnter={props.onMouseEnter}
-			onMouseLeave={props.onMouseLeave}>
+			onMouseLeave={props.onMouseLeave}
+		>
 			<svg
 				xmlns='http://www.w3.org/2000/svg'
 				width='24'
@@ -185,7 +195,8 @@ export const DashedButton = (props) => {
 			isActive={props.isActive}
 			onClick={props.onClick}
 			onMouseEnter={props.onMouseEnter}
-			onMouseLeave={props.onMouseLeave}>
+			onMouseLeave={props.onMouseLeave}
+		>
 			<svg
 				xmlns='http://www.w3.org/2000/svg'
 				width='24'
@@ -224,7 +235,8 @@ export const AddPalleteButton = (props) => {
 		<RoundButton
 			onClick={props.onClick}
 			onMouseEnter={props.onMouseEnter}
-			onMouseLeave={props.onMouseLeave}>
+			onMouseLeave={props.onMouseLeave}
+		>
 			<svg
 				xmlns='http://www.w3.org/2000/svg'
 				width='24'
@@ -254,7 +266,8 @@ export const SquareButton = (props) => {
 		<RoundButton
 			onClick={props.onClick}
 			onMouseEnter={props.onMouseEnter}
-			onMouseLeave={props.onMouseLeave}>
+			onMouseLeave={props.onMouseLeave}
+		>
 			<svg
 				xmlns='http://www.w3.org/2000/svg'
 				width='24'
@@ -276,7 +289,8 @@ export const SphereButton = (props) => {
 		<RoundButton
 			onClick={props.onClick}
 			onMouseEnter={props.onMouseEnter}
-			onMouseLeave={props.onMouseLeave}>
+			onMouseLeave={props.onMouseLeave}
+		>
 			<BiGlobe className='icon' size='24' color='currentColor' />
 		</RoundButton>
 	);
@@ -286,7 +300,8 @@ export const CylinderButton = (props) => {
 		<RoundButton
 			onClick={props.onClick}
 			onMouseEnter={props.onMouseEnter}
-			onMouseLeave={props.onMouseLeave}>
+			onMouseLeave={props.onMouseLeave}
+		>
 			<BiCylinder className='icon' size='24' color='currentColor' />
 		</RoundButton>
 	);
@@ -296,7 +311,8 @@ export const CubeButton = (props) => {
 		<RoundButton
 			onClick={props.onClick}
 			onMouseEnter={props.onMouseEnter}
-			onMouseLeave={props.onMouseLeave}>
+			onMouseLeave={props.onMouseLeave}
+		>
 			<BiCube className='icon' size='24' color='currentColor' />
 		</RoundButton>
 	);
