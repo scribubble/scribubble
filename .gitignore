@@ -7,4 +7,6 @@ node_modules
 /.cache
 package-lock.json
 
-preact.config.js
+*.DS_Store
+
+# preact.config.js
