@@ -10,7 +10,6 @@
     "dev": "preact watch --port 8888",
     "dev-safe": "preact  watch --port 8888 --https --key localhost-key.pem --cert localhost.pem",
     "lint": "eslint src",
-    "test": "jest",
     "np-build": "preact build --no-prerender"
   },
   "eslintConfig": {
@@ -25,8 +24,6 @@
     "enzyme-adapter-preact-pure": "^2.0.0",
     "eslint": "^8.7.0",
     "eslint-config-preact": "^1.1.0",
-    "jest": "^27.4.7",
-    "jest-preset-preact": "^1.0.0",
     "preact-cli": "^3.3.3",
     "sirv-cli": "1.0.3"
   },
@@ -40,12 +37,5 @@
     "react-icons": "^4.3.1",
     "socket.io-client": "^4.4.0",
     "styled-components": "^5.3.3"
-  },
-  "jest": {
-    "preset": "jest-preset-preact",
-    "setupFiles": [
-      "<rootDir>/tests/__mocks__/browserMocks.js",
-      "<rootDir>/tests/__mocks__/setupTests.js"
-    ]
   }
 }

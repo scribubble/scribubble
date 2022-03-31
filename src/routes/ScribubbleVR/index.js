@@ -337,7 +337,6 @@ AFRAME.registerComponent('secondary-hand', {
 
 const ScribubbleVR = () => {
 	const colorpicker = useRef();
-	const target = useRef();
 
 	const [pallete, setPallete] = useState([
 		{
@@ -349,7 +348,6 @@ const ScribubbleVR = () => {
 
 	function colorChanged(color) {
 		_drawingColor = color;
-		target.current.setAttribute("material", "color", _drawingColor);
 	}
 
 	useEffect(() => {
@@ -389,7 +387,7 @@ const ScribubbleVR = () => {
 			<a-camera 
 				id="camera" 
 				wasd-controls="acceleration: 15; fly:true"
-				position="0 0 0"
+				position="0 0 0.7"
 			></a-camera>
 
 			<a-entity
@@ -397,12 +395,10 @@ const ScribubbleVR = () => {
 				id="scribubble"
 			></a-entity>
 
-
-			<a-box ref={target} id="target" position="3 0 -3"></a-box>
-
 			<a-entity
 				secondary-hand
 				oculus-touch-controls="hand: left; model:false"
+				position="5 5 5"
 			>
 				<a-circle ref={colorpicker} colorpicker="colorWheel: #colorWheel; lightWheel: #lightWheel; thicknessWheel: #thicknessWheel;" id="colorpicker" color="#a8a8a8" radius="2" opacity="1" scale="0.1 0.1 0.1">
 					<a-circle id="colorWheel" position="0 0 0.1" rotation="0 0 0" class="wheels"></a-circle>

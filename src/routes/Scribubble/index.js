@@ -432,16 +432,13 @@ class Scribubble extends Component {
 	}
 
 	drawStart = () => {
+		if (this.isDrawing)
+			return;
+		
 		this.isDrawing = true;
 		
 		this.transformControls.detach();
 		
-		// createLineInScene(user_id, {
-		// 	width: params.linewidth,
-		// 	color: params.color,
-		// 	geo: createLineGeometry(user_id, mousePos)
-		// }, scene);
-
 		socket.emit('draw start', {
 			bubbleName: this.bubbleName,
 			user_id: this.user_id,
@@ -475,9 +472,6 @@ class Scribubble extends Component {
 		});
 	}
 
-	/**
-	 * 현재 target 오브젝트 삭제
-	 */
 	deleteTargetObject = () => {
 		if (!this.targetObj)
 			return;
@@ -506,21 +500,19 @@ class Scribubble extends Component {
 		if (event.repeat)
 			return;
 
-		// 스페이브바 입력해서 그리기 시작
+		// 'Space' key
 		if ((key === ' ' || key === 32) && !this.isDrawing) {
 			this.drawStart();
 		}
 		
-		// Control + Z, 뒤로가기
-		if (this.keysPressed['Control'] && event.key == 'z') {
-			// removeLastLine(user_id, scene);
-
-			socket.emit('remove current', {
-				user_id: this.user_id
-			});
-		}
+		// Control + Z
+		// if (this.keysPressed['Control'] && event.key == 'z') {
+		//
+		// 	socket.emit('remove current', {
+		// 		user_id: this.user_id
+		// 	});
+		// }
 		
-		// 타겟팅 중인 오브젝트 삭제
 		if (this.keysPressed['Delete']) {
 			this.deleteTargetObject();
 		}
@@ -766,8 +758,6 @@ class Scribubble extends Component {
 									return ({ openPanel: !prev.openPanel, showNametag: !prev.showNametag })
 								});
 							}}
-							onMouseEnter={e => this.showHelper(e, 'toggle name')}
-							onMouseLeave={this.hideHelper}
 						></TextButton>
 					</div>
 					<RowBottomBar>
