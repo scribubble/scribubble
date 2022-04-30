@@ -83,6 +83,12 @@ export const createLine = (opt) => {
  * @param {THREE.Object3D} parent 라인의 부모
  */
 export const createLineAndAdd = (user_id, opt, parent) => {
+  // drawData[user_id] must always be declared first with createLineGeometry() : opt.geo
+  if (!drawData[user_id])
+    throw 'Empty draw data';
+  else if (!drawData[user_id].myLines)
+    throw 'None lines data';
+
   drawData[user_id].myLines.push(createLine(opt));
   
   let obj = new THREE.Object3D();
@@ -127,9 +133,17 @@ export const removeLastLine = (user_id, parent) => {
 
 /**
  * 마지막으로 그린 선 가져오기
+ * Always use try-catch when using this function
  * @param {String} user_id 유저의 고유 id
  */
 export const getLastLine = (user_id) => {
+  if (!drawData[user_id])
+    throw 'Empty draw data';
+  else if (!drawData[user_id].myLines)
+    throw 'None lines data';
+  else if (drawData[user_id].myLines.length == 0)
+    throw 'Lines length error';
+
   return drawData[user_id].myLines[drawData[user_id].myLines.length - 1];
 };
 

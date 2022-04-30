@@ -307,14 +307,18 @@ class Scribubble extends Component {
 					addPosition(line.drawer_id, new THREE.Vector3(linePos[j].x, linePos[j].y, linePos[j].z));
 				}
 
-				let curLine = getLastLine(line.drawer_id);
-				
-				curLine.parent.position.set(line.tfcPosition.x, line.tfcPosition.y, line.tfcPosition.z);
-				curLine.position.set(line.position.x, line.position.y, line.position.z);
-				curLine.parent.rotation.set(line.tfcRotation.x, line.tfcRotation.y, line.tfcRotation.z);
-				curLine.parent.scale.set(line.tfcScale.x, line.tfcScale.y, line.tfcScale.z);
+				try {
+					let curLine = getLastLine(line.drawer_id);
+					
+					curLine.parent.position.set(line.tfcPosition.x, line.tfcPosition.y, line.tfcPosition.z);
+					curLine.position.set(line.position.x, line.position.y, line.position.z);
+					curLine.parent.rotation.set(line.tfcRotation.x, line.tfcRotation.y, line.tfcRotation.z);
+					curLine.parent.scale.set(line.tfcScale.x, line.tfcScale.y, line.tfcScale.z);
 
-				curLine.type = 'Line2';
+					curLine.type = 'Line2';
+				} catch (err) {
+					console.log(err);
+				}
 			}
 
 			// 도형
@@ -390,6 +394,10 @@ class Scribubble extends Component {
 			this.setState({
 				userList: this.state.userList.filter(user => user.user_id != data.user_id)
 			});
+			console.log(this.nameTag);
+			this.nametagEntity.remove(this.nameTag[data.user_id]);
+			delete this.nameTag[data.user_id];
+			console.log(this.nameTag);
 		});
 	}
 
@@ -456,20 +464,24 @@ class Scribubble extends Component {
 	drawStop = () => {
 		this.isDrawing = false;
 		
-		const curLine = getLastLine(this.user_id);
-		const curPos = getCenterPos(curLine);
+		try {
+			const curLine = getLastLine(this.user_id);
+			const curPos = getCenterPos(curLine);
 
-		socket.emit('draw stop', {
-			bubbleName: this.bubbleName,
-			user_id: this.user_id,
-			objName: curLine.name,
-			tfcPosition: getBasisPosition(curPos),
-			position: {
-				x: -curPos.x,
-				y: -curPos.y,
-				z: -curPos.z
-			}
-		});
+			socket.emit('draw stop', {
+				bubbleName: this.bubbleName,
+				user_id: this.user_id,
+				objName: curLine.name,
+				tfcPosition: getBasisPosition(curPos),
+				position: {
+					x: -curPos.x,
+					y: -curPos.y,
+					z: -curPos.z
+				}
+			});
+		} catch (err) {
+			console.log(err);
+		}
 	}
 
 	deleteTargetObject = () => {
@@ -576,12 +588,16 @@ class Scribubble extends Component {
 		// 그리는 중일때 해당 좌표를 선에 추가
 		if (this.isDrawing) {
 			// addPosition(user_id, mousePos);
-			socket.emit('drawing', {
-				bubbleName: this.bubbleName,
-				objName: getLastLine(this.user_id).name,
-				user_id: this.user_id,
-				mousePos: getBasisPosition(this.mousePos)
-			});
+			try {
+				socket.emit('drawing', {
+					bubbleName: this.bubbleName,
+					objName: getLastLine(this.user_id).name,
+					user_id: this.user_id,
+					mousePos: getBasisPosition(this.mousePos)
+				});
+			} catch (err) {
+				console.log(err);
+			}
 		}
 	}
 	mouseUp = (e) => {
@@ -841,8 +857,15 @@ class Scribubble extends Component {
 										this.setState({ drawingColor: color });
 									}
 
-									if (this.targetObj)
+									if (this.targetObj && this.targetObj.type !== 'Line2Drawing') {
 										this.targetObj.material.color = new THREE.Color(color);
+										socket.emit('change obj color', {
+											bubbleName: this.bubbleName,
+											objName: this.targetObj.name, 
+											objType: this.targetObj.type,
+											color: color,
+										});
+									}
 								}}
 							></PalleteButton>
 						)

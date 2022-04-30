@@ -111,14 +111,18 @@ AFRAME.registerComponent('primary-hand',{
 			var distToLastPos = this.lastPos.distanceTo(currentPos);
 		
 			if (distToLastPos > this.distThresh) {
-				socket.emit('drawing', {
-					bubbleName: this.bubbleName,
-					objName: getLastLine(this.user_id).name,
-					user_id: this.user_id,
-					mousePos: getBasisPosition(currentPos)
-				});
-				
-				this.lastPos = currentPos;
+				try {
+					socket.emit('drawing', {
+						bubbleName: this.bubbleName,
+						objName: getLastLine(this.user_id).name,
+						user_id: this.user_id,
+						mousePos: getBasisPosition(currentPos)
+					});
+					
+					this.lastPos = currentPos;
+				} catch (err) {
+					console.log(err);
+				}
 			}
 		}
 	},
@@ -178,14 +182,18 @@ AFRAME.registerComponent('primary-hand',{
 					addPosition(line.drawer_id, new THREE.Vector3(linePos[j].x, linePos[j].y, linePos[j].z));
 				}
 
-				let curLine = getLastLine(line.drawer_id);
-				
-				curLine.parent.position.set(line.tfcPosition.x, line.tfcPosition.y, line.tfcPosition.z);
-				curLine.position.set(line.position.x, line.position.y, line.position.z);
-				curLine.parent.rotation.set(line.tfcRotation.x, line.tfcRotation.y, line.tfcRotation.z);
-				curLine.parent.scale.set(line.tfcScale.x, line.tfcScale.y, line.tfcScale.z);
+				try {
+					let curLine = getLastLine(line.drawer_id);
+					
+					curLine.parent.position.set(line.tfcPosition.x, line.tfcPosition.y, line.tfcPosition.z);
+					curLine.position.set(line.position.x, line.position.y, line.position.z);
+					curLine.parent.rotation.set(line.tfcRotation.x, line.tfcRotation.y, line.tfcRotation.z);
+					curLine.parent.scale.set(line.tfcScale.x, line.tfcScale.y, line.tfcScale.z);
 
-				curLine.type = 'Line2';
+					curLine.type = 'Line2';
+				} catch (err) {
+					console.log(err);
+				}
 			}
 
 			// 도형
@@ -296,20 +304,24 @@ AFRAME.registerComponent('primary-hand',{
 	triggerup:  function triggerup(event) {
 		this.isDrawing = false;
 
-		const curLine = getLastLine(this.user_id);
-		const curPos = getCenterPos(curLine);
+		try {
+			const curLine = getLastLine(this.user_id);
+			const curPos = getCenterPos(curLine);
 
-		socket.emit('draw stop', {
-			bubbleName: this.bubbleName,
-			user_id: this.user_id,
-			objName: curLine.name,
-			tfcPosition: getBasisPosition(curPos),
-			position: {
-				x: -curPos.x,
-				y: -curPos.y,
-				z: -curPos.z
-			}
-		});
+			socket.emit('draw stop', {
+				bubbleName: this.bubbleName,
+				user_id: this.user_id,
+				objName: curLine.name,
+				tfcPosition: getBasisPosition(curPos),
+				position: {
+					x: -curPos.x,
+					y: -curPos.y,
+					z: -curPos.z
+				}
+			});
+		} catch (err) {
+			console.log(err);
+		}
 	},
 
 	bbuttondown:  function bbuttondown(event) {
