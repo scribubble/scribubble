@@ -1,7 +1,7 @@
 # Scribubble
 Even your scribble to be of one opinion.
 
-[Explore Scribubble »](https://d1bsmwli3pnvxm.cloudfront.net/)
+<!-- [Explore Scribubble »](https://d1bsmwli3pnvxm.cloudfront.net/)  -->
 
 ![ezgif com-gif-maker (5)](https://user-images.githubusercontent.com/14146566/168096520-1d04b7ba-41e7-4253-bb2f-72d8517fbd51.gif)
 
@@ -14,6 +14,12 @@ Scribubble is a **virtual space** where you can express and share your thoughts.
 It runs in a web browser using **WebVR**
 
 Share your thoughts by accessing the web or VR environment.
+
+## Preview
+
+- [VR Drawing : Shark] - https://youtu.be/pp64P3uJ9lk
+- [VR Drawing : Flower] - https://youtu.be/11THPvHyEfQ
+- [Web Drawing] - https://youtu.be/12UBC22-zC8
 
 
 ## Examples
